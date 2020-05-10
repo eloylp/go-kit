@@ -1,7 +1,6 @@
 package fanout
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -110,7 +109,6 @@ func (fo *BufferedFanOut) Unsubscribe(uuid string) error {
 		}
 	}
 	fo.subscribers = newSubs
-	log.Printf("Unsubscribed UUID from fanout %v, pending uuids %v", uuid, len(fo.subscribers))
 	return nil
 }
 
