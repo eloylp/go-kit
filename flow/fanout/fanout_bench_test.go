@@ -2,13 +2,14 @@ package fanout_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
 )
 
 func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ReportAllocs()
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}

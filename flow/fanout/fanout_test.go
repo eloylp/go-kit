@@ -17,7 +17,7 @@ import (
 func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 	elems := 3
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, _ := fo.Subscribe()
 	fanouttest.Populate(fo, elems)
 	var chOk bool
@@ -36,7 +36,7 @@ func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 	elems := 3
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, uuid := fo.Subscribe()
 	fanouttest.Populate(fo, elems)
 	assert.NotEmpty(t, uuid, "want a uuid not an empty string")
@@ -47,7 +47,7 @@ func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 
 func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	// Adds one extra subscriber for test hardening.
 	_, _ = fo.Subscribe()
 	ch, uuid := fo.Subscribe()
@@ -69,14 +69,14 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 }
 
 func TestBufferedFanOut_Unsubscribe_NotFound(t *testing.T) {
-	fo := fanouttest.BufferedFanOut(10)
+	fo := fanouttest.BufferedFanOut(10, time.Now)
 	err := fo.Unsubscribe("A1234")
 	assert.IsType(t, fanout.ErrSubscriberNotFound, err, "wanted fanout.ErrSubscriberNotFound got %T", err)
 }
 
 func TestBufferedFanOut_Reset(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, _ := fo.Subscribe()
 	fo.AddElem([]byte("dd"))
 	fo.Reset()
@@ -89,7 +89,7 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 
 func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, _ := fo.Subscribe() // this subscriber will try to block the entire system
 	elems := 3              // "d + index" elems (continue reading comments ...)
 	fanouttest.Populate(fo, elems)
@@ -122,7 +122,7 @@ func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
 
 func TestBufferedFanOut_Status_Count(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	_, uid1 := fo.Subscribe()
 	ch2, uid2 := fo.Subscribe()
 	fo.AddElem([]int{1, 1})
@@ -137,7 +137,7 @@ func TestBufferedFanOut_Status_Count(t *testing.T) {
 
 func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	_, uid1 := fo.Subscribe()
 	_, uid2 := fo.Subscribe()
 	fo.AddElem([]int{1, 1})

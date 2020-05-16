@@ -1,6 +1,7 @@
 package fanout
 
 import (
+	"github.com/eloylp/go-kit/moment"
 	"sync"
 	"time"
 
@@ -11,11 +12,14 @@ type BufferedFanOut struct {
 	subscribers []subscriber
 	maxBuffLen  int
 	L           sync.RWMutex
+	Now         moment.Now
 }
 
-func NewBufferedFanOut(subscriberBuffSize int) *BufferedFanOut {
+func NewBufferedFanOut(subscriberBuffSize int, now moment.Now) *BufferedFanOut {
 	fo := &BufferedFanOut{
-		maxBuffLen: subscriberBuffSize}
+		maxBuffLen: subscriberBuffSize,
+		Now:        now,
+	}
 	return fo
 }
 
@@ -26,7 +30,7 @@ func (fo *BufferedFanOut) AddElem(elem interface{}) {
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	sl := &Slot{
-		TimeStamp: time.Now(),
+		TimeStamp: fo.Now(),
 		Elem:      elem,
 	}
 	fo.publish(sl)

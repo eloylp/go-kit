@@ -9,7 +9,7 @@ import (
 )
 
 func TestBufferedFanOut_AddElem_SupportsRace(t *testing.T) {
-	fo := fanouttest.BufferedFanOut(5)
+	fo := fanouttest.BufferedFanOut(5, time.Now)
 	subs, _ := fo.Subscribe()
 	go func() {
 		for {
