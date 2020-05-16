@@ -3,14 +3,13 @@
 package fanout_test
 
 import (
+	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
 	"testing"
 	"time"
-
-	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
 )
 
 func TestBufferedFanOut_AddElem_SupportsRace(t *testing.T) {
-	fo := fanouttest.PopulatedBufferedFanOut(t, 3, 3, 5)
+	fo := fanouttest.BufferedFanOut(5)
 	subs, _ := fo.Subscribe()
 	go func() {
 		for {
