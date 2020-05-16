@@ -6,14 +6,14 @@ import (
 	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
 )
 
-func BufferedFanOutAddElem(b *testing.B, subscribers, subscriberBuffSize, messagesSize int) {
+func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ReportAllocs()
-	fo := fanouttest.BufferedFanOut(subscriberBuffSize)
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}
 	b.ResetTimer()
-	data := make([]byte, messagesSize)
+	data := make([]byte, msgLen)
 	for n := 0; n < b.N; n++ {
 		fo.AddElem(data)
 	}

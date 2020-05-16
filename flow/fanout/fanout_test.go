@@ -16,8 +16,8 @@ import (
 
 func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 	elems := 3
-	maxSubsBuffSize := 10
-	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	ch, _ := fo.Subscribe()
 	fanouttest.Populate(fo, elems)
 	var chOk bool
@@ -35,8 +35,8 @@ func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 
 func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 	elems := 3
-	maxSubsBuffSize := 10
-	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	ch, uuid := fo.Subscribe()
 	fanouttest.Populate(fo, elems)
 	assert.NotEmpty(t, uuid, "want a uuid not an empty string")
@@ -46,8 +46,8 @@ func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 }
 
 func TestBufferedFanOut_Unsubscribe(t *testing.T) {
-	maxSubsBuffSize := 10
-	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	// Adds one extra subscriber for test hardening.
 	_, _ = fo.Subscribe()
 	ch, uuid := fo.Subscribe()
@@ -75,8 +75,8 @@ func TestBufferedFanOut_Unsubscribe_NotFound(t *testing.T) {
 }
 
 func TestBufferedFanOut_Reset(t *testing.T) {
-	maxSubsBuffSize := 10
-	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	ch, _ := fo.Subscribe()
 	fo.AddElem([]byte("dd"))
 	fo.Reset()
@@ -88,12 +88,12 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 }
 
 func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
-	maxSubsBuffSize := 10
-	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
 	ch, _ := fo.Subscribe() // this subscriber will try to block the entire system
 	elems := 3              // "d + index" elems (continue reading comments ...)
 	fanouttest.Populate(fo, elems)
-	limitValueForBlocking := maxSubsBuffSize // So we will overwrite entire channel with new data "dn" (limit value of maxSubsBuffSize)
+	limitValueForBlocking := maxBuffLen // So we will overwrite entire channel with new data "dn" (limit value of maxBuffLen)
 	testEnd := make(chan struct{}, 1)
 	go func() {
 		for i := 0; i < limitValueForBlocking; i++ {

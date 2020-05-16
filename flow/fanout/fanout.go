@@ -8,9 +8,9 @@ import (
 )
 
 type BufferedFanOut struct {
-	subscribers        []subscriber
-	subscriberBuffSize int
-	L                  sync.RWMutex
+	subscribers []subscriber
+	maxBuffLen  int
+	L           sync.RWMutex
 }
 
 type subscriber struct {
@@ -31,7 +31,7 @@ func (fo *BufferedFanOut) Subscribers() int {
 
 func NewBufferedFanOut(subscriberBuffSize int) *BufferedFanOut {
 	fo := &BufferedFanOut{
-		subscriberBuffSize: subscriberBuffSize}
+		maxBuffLen: subscriberBuffSize}
 	return fo
 }
 
@@ -50,7 +50,7 @@ func (fo *BufferedFanOut) AddElem(elem interface{}) {
 
 func (fo *BufferedFanOut) publish(sl *Slot) {
 	for _, s := range fo.subscribers {
-		if len(s.ch) == fo.subscriberBuffSize {
+		if len(s.ch) == fo.maxBuffLen {
 			<-s.ch // remove last Slot of subscriber channel
 		}
 		s.ch <- sl
@@ -60,7 +60,7 @@ func (fo *BufferedFanOut) publish(sl *Slot) {
 func (fo *BufferedFanOut) Subscribe() (<-chan *Slot, string) { //nolint:gocritic
 	fo.L.Lock()
 	defer fo.L.Unlock()
-	ch := make(chan *Slot, fo.subscriberBuffSize)
+	ch := make(chan *Slot, fo.maxBuffLen)
 	uuid := guuid.New().String()
 	fo.subscribers = append(fo.subscribers, subscriber{ch, uuid})
 	return ch, uuid
