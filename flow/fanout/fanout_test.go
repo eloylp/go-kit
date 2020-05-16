@@ -55,7 +55,7 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 	fanouttest.Populate(fo, elems)
 	err := fo.Unsubscribe(uuid)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, fo.Subscribers())
+	assert.Equal(t, 1, fo.SubscribersLen())
 	// exhaust channel
 	var count int
 	for range ch {
@@ -78,7 +78,7 @@ func TestBufferedFanOut_Unsubscribe_WithCancelFunc(t *testing.T) {
 	fanouttest.Populate(fo, elems)
 	err := cancel()
 	assert.NoError(t, err)
-	assert.Equal(t, 1, fo.Subscribers())
+	assert.Equal(t, 1, fo.SubscribersLen())
 	// exhaust channel
 	var count int
 	for range ch {
@@ -105,7 +105,7 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 	ch, _, _ := fo.Subscribe()
 	fo.AddElem([]byte("dd"))
 	fo.Reset()
-	assert.Equal(t, 0, fo.Subscribers(), "no subscribers expected after reset")
+	assert.Equal(t, 0, fo.SubscribersLen(), "no subscribers expected after reset")
 	// Check channel is closed after consumption
 	<-ch
 	_, ok := <-ch

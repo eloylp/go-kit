@@ -37,7 +37,7 @@ func NewBufferedFanOut(subscriberBuffSize int, now moment.Now) *BufferedFanOut {
 }
 
 // AddElem publish
-//Subscribers that doesnt consume elements will begin to
+//SubscribersLen that doesnt consume elements will begin to
 // loose old ones.
 func (fo *BufferedFanOut) AddElem(elem interface{}) {
 	fo.L.Lock()
@@ -49,7 +49,7 @@ func (fo *BufferedFanOut) AddElem(elem interface{}) {
 	fo.publish(sl)
 }
 
-func (fo *BufferedFanOut) Subscribers() int {
+func (fo *BufferedFanOut) SubscribersLen() int {
 	fo.L.RLock()
 	defer fo.L.RUnlock()
 	return len(fo.subscribers)
