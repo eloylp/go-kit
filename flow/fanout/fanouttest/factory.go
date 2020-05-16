@@ -1,23 +1,28 @@
 package fanouttest
 
 import (
-	"strconv"
-	"testing"
-
 	"github.com/eloylp/go-kit/flow/fanout"
+	"strconv"
 )
 
 // PopulatedBufferedFanOut facilitates construction of an store
 // by accepting the number of elements to be present, and
 // store.BufferedStore needed constructor args.
-func PopulatedBufferedFanOut(t testing.TB, elems, maxElems, subscriberBuffSize int) *fanout.BufferedFanOut {
-	s := fanout.NewBufferedFanOut(maxElems, subscriberBuffSize)
+func PopulatedBufferedFanOut(elems, subscriberBuffSize int) *fanout.BufferedFanOut {
+	fo := fanout.NewBufferedFanOut(subscriberBuffSize)
+	Populate(fo, elems)
+	return fo
+}
+
+func BufferedFanOut(subscriberBuffSize int) *fanout.BufferedFanOut {
+	fo := fanout.NewBufferedFanOut(subscriberBuffSize)
+	return fo
+}
+
+func Populate(fo *fanout.BufferedFanOut, elems int) {
 	for i := 0; i < elems; i++ {
 		data := "d" + strconv.Itoa(i)
 		elem := []byte(data)
-		if err := s.AddElem(elem); err != nil {
-			t.Fatal(err)
-		}
+		fo.AddElem(elem)
 	}
-	return s
 }

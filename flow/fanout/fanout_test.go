@@ -16,21 +16,18 @@ import (
 
 func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 	elems := 3
-	maxElems := 3
 	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
+	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
 	ch, _ := fo.Subscribe()
-	err := fo.AddElem([]byte("d3")) // Extra (4th) data that is removed by excess
-	assert.NoError(t, err)
+	fanouttest.Populate(fo, elems)
 	var chOk bool
 	var slot *fanout.Slot
-	for i := 0; i < elems+1; i++ {
+	for i := 0; i < elems; i++ {
 		slot, chOk = <-ch
 		item, ok := slot.Elem.([]byte)
 		assert.True(t, ok, "wanted []byte type got %T", item)
 		want := "d" + fmt.Sprint(i)
 		got := string(item)
-		// We check that all data is present, even removed by excess
 		assert.Equal(t, want, got, "error listening subscribed elements, wanted was %q but got %q", want, got)
 	}
 	assert.True(t, chOk, "channel remains open for future consumes")
@@ -38,10 +35,10 @@ func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 
 func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 	elems := 3
-	maxElems := 3
 	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
+	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
 	ch, uuid := fo.Subscribe()
+	fanouttest.Populate(fo, elems)
 	assert.NotEmpty(t, uuid, "want a uuid not an empty string")
 	assert.NotNil(t, ch, "want a channel")
 	_, ok := <-ch
@@ -49,17 +46,16 @@ func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 }
 
 func TestBufferedFanOut_Unsubscribe(t *testing.T) {
-	elems := 3
-	maxElems := 3
 	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
+	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
 	// Adds one extra subscriber for test hardening.
 	_, _ = fo.Subscribe()
 	ch, uuid := fo.Subscribe()
+	elems := 3
+	fanouttest.Populate(fo, elems)
 	err := fo.Unsubscribe(uuid)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, fo.Subscribers())
-
 	// exhaust channel
 	var count int
 	for range ch {
@@ -73,57 +69,36 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 }
 
 func TestBufferedFanOut_Unsubscribe_NotFound(t *testing.T) {
-	elems := 3
-	maxElems := 3
-	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
+	fo := fanouttest.BufferedFanOut(10)
 	err := fo.Unsubscribe("A1234")
 	assert.IsType(t, fanout.ErrSubscriberNotFound, err, "wanted fanout.ErrSubscriberNotFound got %T", err)
 }
 
 func TestBufferedFanOut_Reset(t *testing.T) {
-	elems := 0
-	maxElems := 3
 	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
+	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
 	ch, _ := fo.Subscribe()
-	err := fo.AddElem([]byte("dd"))
-	assert.NoError(t, err)
+	fo.AddElem([]byte("dd"))
 	fo.Reset()
 	assert.Equal(t, 0, fo.Subscribers(), "no subscribers expected after reset")
-	assert.Equal(t, 0, fo.Length(), "no elems expected after reset")
 	// Check channel is closed after consumption
 	<-ch
 	_, ok := <-ch
 	assert.False(t, ok)
 }
 
-func TestNewBufferedFanOut_AddItem_OldItemsClear(t *testing.T) {
-	elems := 3
-	maxElems := 3
-	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
-	err := fo.AddElem([]byte("d4"))
-	assert.NoError(t, err)
-	want := 3
-	got := fo.Length()
-	assert.Equal(t, want, got, "want %v resultant elems got %v", want, got)
-}
-
 func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
-	elems := 3 // "d + index" elems (continue reading comments ...)
-	maxElems := 3
 	maxSubsBuffSize := 10
-	fo := fanouttest.PopulatedBufferedFanOut(t, elems, maxElems, maxSubsBuffSize)
-	ch, _ := fo.Subscribe()     // this subscriber will try to block the entire system
-	limitValueForBlocking := 11 // So we will exceed by one (limit value of maxSubsBuffSize)
-
+	fo := fanouttest.BufferedFanOut(maxSubsBuffSize)
+	ch, _ := fo.Subscribe() // this subscriber will try to block the entire system
+	elems := 3              // "d + index" elems (continue reading comments ...)
+	fanouttest.Populate(fo, elems)
+	limitValueForBlocking := maxSubsBuffSize // So we will overwrite entire channel with new data "dn" (limit value of maxSubsBuffSize)
 	testEnd := make(chan struct{}, 1)
 	go func() {
 		for i := 0; i < limitValueForBlocking; i++ {
 			// "dn + index" will mark new data segments that may override old ones in factory "d + index".
-			err := fo.AddElem([]byte("dn" + strconv.Itoa(i)))
-			assert.NoError(t, err)
+			fo.AddElem([]byte("dn" + strconv.Itoa(i)))
 		}
 		testEnd <- struct{}{}
 	}()

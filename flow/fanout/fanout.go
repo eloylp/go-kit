@@ -8,9 +8,7 @@ import (
 )
 
 type BufferedFanOut struct {
-	slots              []*Slot
 	subscribers        []subscriber
-	maxElems           int
 	subscriberBuffSize int
 	L                  sync.RWMutex
 }
@@ -25,51 +23,31 @@ type Slot struct {
 	Elem      interface{}
 }
 
-func (fo *BufferedFanOut) Length() int {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
-	return len(fo.slots)
-}
-
 func (fo *BufferedFanOut) Subscribers() int {
 	fo.L.RLock()
 	defer fo.L.RUnlock()
 	return len(fo.subscribers)
 }
 
-func NewBufferedFanOut(maxSlots, subscriberBuffSize int) *BufferedFanOut {
-	return &BufferedFanOut{maxElems: maxSlots, subscriberBuffSize: subscriberBuffSize}
+func NewBufferedFanOut(subscriberBuffSize int) *BufferedFanOut {
+	fo := &BufferedFanOut{
+		subscriberBuffSize: subscriberBuffSize}
+	return fo
 }
 
-func (fo *BufferedFanOut) AddElem(elem interface{}) error {
+// AddElem publish
+//Subscribers that doesnt consume elements will begin to
+// loose old ones.
+func (fo *BufferedFanOut) AddElem(elem interface{}) {
 	fo.L.Lock()
 	defer fo.L.Unlock()
-	s := &Slot{
+	sl := &Slot{
 		TimeStamp: time.Now(),
 		Elem:      elem,
 	}
-	fo.addSlot(s)
-	fo.gcItems()
-	fo.publish(s)
-	return nil
+	fo.publish(sl)
 }
 
-func (fo *BufferedFanOut) addSlot(s *Slot) {
-	fo.slots = append(fo.slots, s)
-}
-
-func (fo *BufferedFanOut) gcItems() {
-	l := len(fo.slots)
-	if l > fo.maxElems {
-		i := make([]*Slot, fo.maxElems)
-		e := fo.slots[1:l]
-		copy(i, e)
-		fo.slots = i
-	}
-}
-
-// Subscribers that doesnt consume elements will begin to
-// loose old ones.
 func (fo *BufferedFanOut) publish(sl *Slot) {
 	for _, s := range fo.subscribers {
 		if len(s.ch) == fo.subscriberBuffSize {
@@ -85,22 +63,16 @@ func (fo *BufferedFanOut) Subscribe() (<-chan *Slot, string) { //nolint:gocritic
 	ch := make(chan *Slot, fo.subscriberBuffSize)
 	uuid := guuid.New().String()
 	fo.subscribers = append(fo.subscribers, subscriber{ch, uuid})
-	for _, sl := range fo.slots {
-		if sl != nil {
-			ch <- sl
-		}
-	}
 	return ch, uuid
 }
 
 func (fo *BufferedFanOut) Unsubscribe(uuid string) error {
+	fo.L.Lock()
+	defer fo.L.Unlock()
 	if !fo.exists(uuid) {
 		return ErrSubscriberNotFound
 	}
-	fo.L.Lock()
-	defer fo.L.Unlock()
-	ec := fo.estimateCapacity()
-	newSubs := make([]subscriber, 0, ec)
+	newSubs := make([]subscriber, 0, len(fo.subscribers))
 	for _, s := range fo.subscribers {
 		if s.UUID == uuid {
 			close(s.ch)
@@ -113,23 +85,12 @@ func (fo *BufferedFanOut) Unsubscribe(uuid string) error {
 }
 
 func (fo *BufferedFanOut) exists(uuid string) bool {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
 	for _, s := range fo.subscribers {
 		if s.UUID == uuid {
 			return true
 		}
 	}
 	return false
-}
-
-func (fo *BufferedFanOut) estimateCapacity() int {
-	cl := len(fo.subscribers)
-	ec := 0
-	if cl > 0 {
-		ec = cl - 1
-	}
-	return ec
 }
 
 func (fo *BufferedFanOut) Reset() {
@@ -139,5 +100,4 @@ func (fo *BufferedFanOut) Reset() {
 		close(s.ch)
 	}
 	fo.subscribers = nil
-	fo.slots = nil
 }
