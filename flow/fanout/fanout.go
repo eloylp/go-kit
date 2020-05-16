@@ -8,6 +8,19 @@ import (
 	guuid "github.com/google/uuid"
 )
 
+type Status map[string]int
+type CancelFunc func() error
+
+type subscriber struct {
+	ch   chan *Slot
+	UUID string
+}
+
+type Slot struct {
+	TimeStamp time.Time
+	Elem      interface{}
+}
+
 type BufferedFanOut struct {
 	subscribers []subscriber
 	maxBuffLen  int
@@ -107,16 +120,3 @@ func (fo *BufferedFanOut) Status() Status {
 	}
 	return status
 }
-
-type subscriber struct {
-	ch   chan *Slot
-	UUID string
-}
-
-type Slot struct {
-	TimeStamp time.Time
-	Elem      interface{}
-}
-
-type Status map[string]int
-type CancelFunc func() error
