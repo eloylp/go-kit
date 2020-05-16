@@ -51,13 +51,15 @@ func (fo *BufferedFanOut) publish(sl *Slot) {
 	}
 }
 
-func (fo *BufferedFanOut) Subscribe() (<-chan *Slot, string) { //nolint:gocritic
+func (fo *BufferedFanOut) Subscribe() (<-chan *Slot, string, CancelFunc) { //nolint:gocritic
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	ch := make(chan *Slot, fo.maxBuffLen)
 	uuid := guuid.New().String()
 	fo.subscribers = append(fo.subscribers, subscriber{ch, uuid})
-	return ch, uuid
+	return ch, uuid, func() error {
+		return fo.Unsubscribe(uuid)
+	}
 }
 
 func (fo *BufferedFanOut) Unsubscribe(uuid string) error {
@@ -117,3 +119,4 @@ type Slot struct {
 }
 
 type Status map[string]int
+type CancelFunc func() error
