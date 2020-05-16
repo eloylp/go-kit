@@ -13,22 +13,6 @@ type BufferedFanOut struct {
 	L           sync.RWMutex
 }
 
-type subscriber struct {
-	ch   chan *Slot
-	UUID string
-}
-
-type Slot struct {
-	TimeStamp time.Time
-	Elem      interface{}
-}
-
-func (fo *BufferedFanOut) Subscribers() int {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
-	return len(fo.subscribers)
-}
-
 func NewBufferedFanOut(subscriberBuffSize int) *BufferedFanOut {
 	fo := &BufferedFanOut{
 		maxBuffLen: subscriberBuffSize}
@@ -46,6 +30,12 @@ func (fo *BufferedFanOut) AddElem(elem interface{}) {
 		Elem:      elem,
 	}
 	fo.publish(sl)
+}
+
+func (fo *BufferedFanOut) Subscribers() int {
+	fo.L.RLock()
+	defer fo.L.RUnlock()
+	return len(fo.subscribers)
 }
 
 func (fo *BufferedFanOut) publish(sl *Slot) {
@@ -100,4 +90,14 @@ func (fo *BufferedFanOut) Reset() {
 		close(s.ch)
 	}
 	fo.subscribers = nil
+}
+
+type subscriber struct {
+	ch   chan *Slot
+	UUID string
+}
+
+type Slot struct {
+	TimeStamp time.Time
+	Elem      interface{}
 }
