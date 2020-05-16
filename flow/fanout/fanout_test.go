@@ -119,3 +119,33 @@ func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
 			"The are elements in subs channel that needs to be discarded")
 	}
 }
+
+func TestBufferedFanOut_Status_Count(t *testing.T) {
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	_, uid1 := fo.Subscribe()
+	ch2, uid2 := fo.Subscribe()
+	fo.AddElem([]int{1, 1})
+	fo.AddElem([]int{2, 2})
+	<-ch2
+	want := fanout.Status{
+		uid1: 2,
+		uid2: 1,
+	}
+	assert.Equal(t, want, fo.Status())
+}
+
+func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
+	maxBuffLen := 10
+	fo := fanouttest.BufferedFanOut(maxBuffLen)
+	_, uid1 := fo.Subscribe()
+	_, uid2 := fo.Subscribe()
+	fo.AddElem([]int{1, 1})
+	fo.AddElem([]int{2, 2})
+	err := fo.Unsubscribe(uid1)
+	assert.NoError(t, err)
+	want := fanout.Status{
+		uid2: 2,
+	}
+	assert.Equal(t, want, fo.Status())
+}

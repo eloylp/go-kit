@@ -92,6 +92,16 @@ func (fo *BufferedFanOut) Reset() {
 	fo.subscribers = nil
 }
 
+func (fo *BufferedFanOut) Status() Status {
+	fo.L.RLock()
+	defer fo.L.RUnlock()
+	status := make(Status, len(fo.subscribers))
+	for _, s := range fo.subscribers {
+		status[s.UUID] = len(s.ch)
+	}
+	return status
+}
+
 type subscriber struct {
 	ch   chan *Slot
 	UUID string
@@ -101,3 +111,5 @@ type Slot struct {
 	TimeStamp time.Time
 	Elem      interface{}
 }
+
+type Status map[string]int
