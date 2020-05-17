@@ -56,9 +56,9 @@ type BufferedFanOut struct {
 // NewBufferedFanOut needs buffer size for subscribers channels
 // and function that must retrieve the current time for Slots
 // timestamps.
-func NewBufferedFanOut(subscriberBuffSize int, now moment.Now) *BufferedFanOut {
+func NewBufferedFanOut(maxBuffLen int, now moment.Now) *BufferedFanOut {
 	fo := &BufferedFanOut{
-		maxBuffLen: subscriberBuffSize,
+		maxBuffLen: maxBuffLen,
 		Now:        now,
 	}
 	return fo
