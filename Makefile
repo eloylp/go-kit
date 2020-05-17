@@ -1,5 +1,5 @@
 PROJECT_NAME := $(shell basename "$(PWD)")
-GO_LINT_CI_VERSION := v1.26.0
+GO_LINT_CI_VERSION := v1.27.0
 GO_LINT_CI_PATH := $(shell go env GOPATH)/bin
 
 .DEFAULT_GOAL := test
