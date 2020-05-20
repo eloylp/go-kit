@@ -49,7 +49,7 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 	maxBuffLen := 10
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	// Adds one extra subscriber for test hardening.
-	_, _, _ = fo.Subscribe()
+	_, _, _ = fo.Subscribe() //nolint:dogsled
 	ch, uuid, _ := fo.Subscribe()
 	elems := 3
 	fanouttest.Populate(fo, elems)
@@ -72,7 +72,7 @@ func TestBufferedFanOut_Unsubscribe_WithCancelFunc(t *testing.T) {
 	maxBuffLen := 10
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	// Adds one extra subscriber for test hardening.
-	_, _, _ = fo.Subscribe()
+	_, _, _ = fo.Subscribe() //nolint:dogsled
 	ch, _, cancel := fo.Subscribe()
 	elems := 3
 	fanouttest.Populate(fo, elems)

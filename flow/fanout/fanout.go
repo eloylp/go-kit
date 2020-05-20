@@ -1,9 +1,10 @@
 package fanout
 
 import (
-	"github.com/eloylp/go-kit/moment"
 	"sync"
 	"time"
+
+	"github.com/eloylp/go-kit/moment"
 
 	guuid "github.com/google/uuid"
 )
