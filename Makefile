@@ -12,7 +12,7 @@ linter-install:
 	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_LINT_CI_PATH) $(GO_LINT_CI_VERSION)
 all: lint test
 
-test: test-unit test-integration test-concurrent test-bench
+test: test-unit test-integration test-bench test-concurrent
 
 test-unit:
 	go test -race -v --tags="unit" ./...
