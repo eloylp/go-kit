@@ -1,5 +1,7 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/eloylp/go-kit v0.0.0-20200520190713-fb0d28c9b9e0 h1:4tAUGHjbbEQEtsVjTZmir6Bh6jHrRpylfFYIdAj+o9o=
+github.com/eloylp/go-kit v0.0.0-20200520190713-fb0d28c9b9e0/go.mod h1:rPz3M7y5hViX31Ilozhiifxsiq5/1iYbMYhqNV5ByUY=
 github.com/eloylp/meerkat v1.0.0 h1:WlP4ZcaR9ioFObD0ymdkKQmgwHoBzCAP0nYzKaMXQgE=
 github.com/eloylp/meerkat v1.0.0/go.mod h1:CBv17fi/IzjIKcBskQAhzfsdpIhe5OcL5e63kq4lDCA=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=

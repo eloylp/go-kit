@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eloylp/go-kit/moment"
+	"github.com/eloylp/kit/moment"
 
 	guuid "github.com/google/uuid"
 )

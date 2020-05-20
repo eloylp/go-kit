@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/eloylp/go-kit/flow/fanout"
-	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
+	"github.com/eloylp/kit/flow/fanout"
+	"github.com/eloylp/kit/flow/fanout/fanouttest"
 )
 
 func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {

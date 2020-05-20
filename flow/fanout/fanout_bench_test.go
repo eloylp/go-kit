@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
+	"github.com/eloylp/kit/flow/fanout/fanouttest"
 )
 
 func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {

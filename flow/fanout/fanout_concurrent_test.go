@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eloylp/go-kit/flow/fanout"
-	"github.com/eloylp/go-kit/flow/fanout/fanouttest"
+	"github.com/eloylp/kit/flow/fanout"
+	"github.com/eloylp/kit/flow/fanout/fanouttest"
 )
 
 func TestBufferedFanOut_SupportsRace(t *testing.T) {

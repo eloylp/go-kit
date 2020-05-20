@@ -3,8 +3,8 @@ package fanouttest
 import (
 	"strconv"
 
-	"github.com/eloylp/go-kit/flow/fanout"
-	"github.com/eloylp/go-kit/moment"
+	"github.com/eloylp/kit/flow/fanout"
+	"github.com/eloylp/kit/moment"
 )
 
 // BufferedFanOut is here for hiding constructor in tests.
