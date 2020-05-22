@@ -21,6 +21,6 @@ func Populate(fo *fanout.BufferedFanOut, elems int) {
 	for i := 0; i < elems; i++ {
 		data := "d" + strconv.Itoa(i)
 		elem := []byte(data)
-		fo.AddElem(elem)
+		fo.Add(elem)
 	}
 }

@@ -16,7 +16,7 @@ func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ResetTimer()
 	data := make([]byte, msgLen)
 	for n := 0; n < b.N; n++ {
-		fo.AddElem(data)
+		fo.Add(data)
 	}
 }
 

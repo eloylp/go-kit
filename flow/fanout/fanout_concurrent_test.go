@@ -49,7 +49,7 @@ func TestBufferedFanOut_SupportsRace(t *testing.T) {
 	// Add elem vector
 	go func() {
 		for {
-			fo.AddElem([]byte("data"))
+			fo.Add([]byte("data"))
 		}
 	}()
 	// Add reset vector

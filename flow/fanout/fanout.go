@@ -65,11 +65,11 @@ func NewBufferedFanOut(maxBuffLen int, now moment.Now) *BufferedFanOut {
 	return fo
 }
 
-// AddElem will send a copy of elem to all subscribers
+// Add will send a copy of elem to all subscribers
 // channels.
 // If one of the subscribers channels is full, oldest data
 // will be discarded.
-func (fo *BufferedFanOut) AddElem(elem interface{}) {
+func (fo *BufferedFanOut) Add(elem interface{}) {
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	sl := &Slot{

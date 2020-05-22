@@ -103,7 +103,7 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 	maxBuffLen := 10
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, _, _ := fo.Subscribe()
-	fo.AddElem([]byte("dd"))
+	fo.Add([]byte("dd"))
 	fo.Reset()
 	assert.Equal(t, 0, fo.SubscribersLen(), "no subscribers expected after reset")
 	// Check channel is closed after consumption
@@ -112,7 +112,7 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
+func TestBufferedFanOut_Add_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	maxBuffLen := 10
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	ch, _, _ := fo.Subscribe() // this subscriber will try to block the entire system
@@ -123,7 +123,7 @@ func TestBufferedFanOut_AddItem_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	go func() {
 		for i := 0; i < limitValueForBlocking; i++ {
 			// "dn + index" will mark new data segments that may override old ones in factory "d + index".
-			fo.AddElem([]byte("dn" + strconv.Itoa(i)))
+			fo.Add([]byte("dn" + strconv.Itoa(i)))
 		}
 		testEnd <- struct{}{}
 	}()
@@ -150,8 +150,8 @@ func TestBufferedFanOut_Status_Count(t *testing.T) {
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	_, uid1, _ := fo.Subscribe()
 	ch2, uid2, _ := fo.Subscribe()
-	fo.AddElem([]int{1, 1})
-	fo.AddElem([]int{2, 2})
+	fo.Add([]int{1, 1})
+	fo.Add([]int{2, 2})
 	<-ch2
 	want := fanout.Status{
 		uid1: 2,
@@ -165,8 +165,8 @@ func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
 	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
 	_, _, cancel := fo.Subscribe()
 	_, uid2, _ := fo.Subscribe()
-	fo.AddElem([]int{1, 1})
-	fo.AddElem([]int{2, 2})
+	fo.Add([]int{1, 1})
+	fo.Add([]int{2, 2})
 	err := cancel()
 	assert.NoError(t, err)
 	want := fanout.Status{
