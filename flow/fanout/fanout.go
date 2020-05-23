@@ -65,8 +65,12 @@ func NewBufferedFanOut(maxBuffLen int, now moment.Now) *BufferedFanOut {
 	return fo
 }
 
-// Add will send a copy of elem to all subscribers
-// channels.
+// Add will send of elem to all subscribers channels.
+// Take care about race conditions and the type of
+// element that pass in. If you pass an integer, that
+// will be copied to each subscriber. Problem comes if you
+// pass referenced types like maps or slices or any other
+// pointer type.
 // If one of the subscribers channels is full, oldest data
 // will be discarded.
 func (fo *BufferedFanOut) Add(elem interface{}) {
