@@ -1,4 +1,4 @@
-// +build concurrent
+// +build racy
 
 package fanout_test
 
@@ -15,7 +15,7 @@ func TestBufferedFanOut_SupportsRace(t *testing.T) {
 	fo := fanouttest.BufferedFanOut(5, time.Now)
 	cancels := make(chan fanout.CancelFunc, 10)
 	var wg sync.WaitGroup
-	t.Log("starting concurrent test ...")
+	t.Log("starting racy test ...")
 	// Add status vector
 	go func() {
 		for {
