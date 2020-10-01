@@ -18,6 +18,7 @@ import (
 func WithOSSignals(s *http.Server, timeout time.Duration, wg *sync.WaitGroup, errHandler func(err error)) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		<-signals
