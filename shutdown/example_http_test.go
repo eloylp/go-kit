@@ -16,7 +16,6 @@ func ExampleWithOSSignals() {
 		Addr: "0.0.0.0:8080",
 	}
 	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	shutdown.WithOSSignals(s, 5*time.Second, wg, func(err error) { // We can also pass nil as errHandler func if we dont care about errors.
 		fmt.Printf("shutdown error: %v \n", err)
 	})
