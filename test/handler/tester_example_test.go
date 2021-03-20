@@ -16,7 +16,7 @@ func router() http.Handler {
 }
 
 func IndexHandler(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("This is content"))
+	_, _ = w.Write([]byte("This is content"))
 }
 
 func RedirectHandler(w http.ResponseWriter, _ *http.Request) {

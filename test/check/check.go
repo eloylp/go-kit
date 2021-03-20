@@ -1,7 +1,7 @@
 package check
 
 import (
-	"crypto/md5"
+	"crypto/md5" //nolint: gosec
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,7 +27,7 @@ func Contains(want string) Function {
 // is equal to the wanted MD5 sum.
 func MatchesMD5(want string) Function {
 	return func(_ *http.Response, body []byte) error {
-		m := md5.New()
+		m := md5.New() // nolint: gosec
 		if _, err := m.Write(body); err != nil {
 			return fmt.Errorf("matchMD5: internal error, cannot write to data stream")
 		}
