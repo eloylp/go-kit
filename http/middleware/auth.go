@@ -13,14 +13,14 @@ import (
 type Authorization map[string]string
 
 // AuthChecker is a middleware to prevent/allow access to
-// a specific combination of HTTP method/path. Read authMiddlewareConfig
+// a specific combination of HTTP method/path. Read AuthConfig
 // for more information about how to configure this middleware.
 // This middleware should be the executed just before your business logic.
-func AuthChecker(cfg *authMiddlewareConfig) Middleware {
+func AuthChecker(cfg *AuthConfig) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == cfg.method {
-				for _, p := range cfg.patterns {
+			if r.Method == cfg.Method {
+				for _, p := range cfg.Patterns {
 					if !p.MatchString(r.URL.String()) {
 						continue
 					}
@@ -30,7 +30,7 @@ func AuthChecker(cfg *authMiddlewareConfig) Middleware {
 						_, _ = w.Write([]byte("Unauthorized"))
 						return
 					}
-					passHash, ok := cfg.authorizations[user]
+					passHash, ok := cfg.Authorizations[user]
 					if !ok {
 						w.WriteHeader(http.StatusUnauthorized)
 						_, _ = w.Write([]byte("Unauthorized"))
@@ -49,37 +49,37 @@ func AuthChecker(cfg *authMiddlewareConfig) Middleware {
 	}
 }
 
-type authMiddlewareConfig struct {
-	method         string
-	patterns       []*regexp.Regexp
-	authorizations Authorization
+type AuthConfig struct {
+	Method         string
+	Patterns       []*regexp.Regexp
+	Authorizations Authorization
 }
 
 // NewAuthMiddlewareConfig returns a builder pattern that
 // will help to build a config for setup the AuthChecker middleware.
 // you must follow the fluent interface to set all the fields in the
 // struct.
-func NewAuthMiddlewareConfig() *authMiddlewareConfig { //nolint:golint
-	return &authMiddlewareConfig{}
+func NewAuthMiddlewareConfig() *AuthConfig { //nolint:golint
+	return &AuthConfig{}
 }
 
 // WithMethod sets the HTTP method where all the protected endpoints will reside.
-func (a *authMiddlewareConfig) WithMethod(m string) *authMiddlewareConfig {
-	a.method = m
+func (a *AuthConfig) WithMethod(m string) *AuthConfig {
+	a.Method = m
 	return a
 }
 
 // WithPathRegex appends a regex pattern to be matched with the input path of the user.
 // The HTTP paths that matches this regexes will be protected. This method can be called
 // multiple times to add multiple regex.
-func (a *authMiddlewareConfig) WithPathRegex(p string) *authMiddlewareConfig {
-	a.patterns = append(a.patterns, regexp.MustCompile(p))
+func (a *AuthConfig) WithPathRegex(p string) *AuthConfig {
+	a.Patterns = append(a.Patterns, regexp.MustCompile(p))
 	return a
 }
 
 // WithAuth maps the user/password permissions. See Authorization struct type for more
 // information.
-func (a *authMiddlewareConfig) WithAuth(auth Authorization) *authMiddlewareConfig {
-	a.authorizations = auth
+func (a *AuthConfig) WithAuth(auth Authorization) *AuthConfig {
+	a.Authorizations = auth
 	return a
 }
