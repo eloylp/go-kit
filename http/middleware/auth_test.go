@@ -46,7 +46,7 @@ func TestAuthChecker(t *testing.T) {
 	cases := authTestCases()
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			cfg := middleware.NewAuthMiddlewareConfig().
+			cfg := middleware.NewAuthConfig().
 				WithMethod(c.SutConfig.Method).
 				WithAuth(c.SutConfig.Auth)
 			for _, r := range c.SutConfig.PathRegexes {

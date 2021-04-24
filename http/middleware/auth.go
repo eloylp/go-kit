@@ -55,11 +55,11 @@ type AuthConfig struct {
 	Authorizations Authorization
 }
 
-// NewAuthMiddlewareConfig returns a builder pattern that
+// NewAuthConfig returns a builder pattern that
 // will help to build a config for setup the AuthChecker middleware.
 // you must follow the fluent interface to set all the fields in the
 // struct.
-func NewAuthMiddlewareConfig() *AuthConfig { //nolint:golint
+func NewAuthConfig() *AuthConfig { //nolint:golint
 	return &AuthConfig{}
 }
 
