@@ -17,7 +17,7 @@ func RequestLogger(logger *logrus.Logger) Middleware {
 				"method":  r.Method,
 				"ip":      r.RemoteAddr,
 				"headers": r.Header,
-			}).Info("request from client")
+			}).Debug("intercepted request")
 			h.ServeHTTP(w, r)
 		})
 	}

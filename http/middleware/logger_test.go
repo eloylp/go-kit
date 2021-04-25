@@ -16,6 +16,7 @@ func TestRequestLogger(t *testing.T) {
 	logOut := bytes.NewBuffer(nil)
 	logger := logrus.New()
 	logger.SetOutput(logOut)
+	logger.SetLevel(logrus.DebugLevel)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/path", nil)
@@ -25,9 +26,10 @@ func TestRequestLogger(t *testing.T) {
 	mid(nullHandler).ServeHTTP(rec, req)
 
 	logs := logOut.String()
-	assert.Contains(t, logs, http.MethodGet)
-	assert.Contains(t, logs, "/path")
-	assert.Contains(t, logs, "192.168.1.15")
-	assert.Contains(t, logs, "Accept")
-	assert.Contains(t, logs, "application/json")
+	assert.Contains(t, logs, "method=GET")
+	assert.Contains(t, logs, "path=/path")
+	assert.Contains(t, logs, "ip=192.168.1.15")
+	assert.Contains(t, logs, "headers=\"map[Accept:[application/json]]")
+	assert.Contains(t, logs, "msg=\"intercepted request\"")
+	assert.Contains(t, logs, "level=debug")
 }
