@@ -19,6 +19,10 @@ type Authorization map[string]string
 func AuthChecker(cfg *AuthConfig) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if cfg == nil {
+				h.ServeHTTP(w, r)
+				return
+			}
 			if r.Method == cfg.Method {
 				for _, p := range cfg.Patterns {
 					if !p.MatchString(r.URL.String()) {

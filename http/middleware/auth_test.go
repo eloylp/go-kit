@@ -154,3 +154,11 @@ func authTestCases() []AuthTestCase {
 		},
 	}
 }
+
+func TestAuthCheckerPassOnNil(t *testing.T) {
+	mid := middleware.AuthChecker(nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	mid(nullHandler).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Result().StatusCode)
+}
