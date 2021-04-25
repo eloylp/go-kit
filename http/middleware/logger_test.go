@@ -30,6 +30,7 @@ func TestRequestLogger(t *testing.T) {
 	assert.Contains(t, logs, "path=/path")
 	assert.Contains(t, logs, "ip=192.168.1.15")
 	assert.Contains(t, logs, "headers=\"map[Accept:[application/json]]")
+	assert.Contains(t, logs, "duration")
 	assert.Contains(t, logs, "msg=\"intercepted request\"")
 	assert.Contains(t, logs, "level=debug")
 }

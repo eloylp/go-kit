@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -12,13 +13,16 @@ import (
 func RequestLogger(logger *logrus.Logger) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			logger.WithFields(logrus.Fields{
-				"path":    r.URL.String(),
-				"method":  r.Method,
-				"ip":      r.RemoteAddr,
-				"headers": r.Header,
-			}).Debug("intercepted request")
+			start := time.Now()
 			h.ServeHTTP(w, r)
+			duration := time.Since(start)
+			logger.WithFields(logrus.Fields{
+				"path":     r.URL.String(),
+				"method":   r.Method,
+				"ip":       r.RemoteAddr,
+				"headers":  r.Header,
+				"duration": duration,
+			}).Debug("intercepted request")
 		})
 	}
 }
