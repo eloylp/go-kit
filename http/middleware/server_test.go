@@ -10,7 +10,6 @@ import (
 	"github.com/eloylp/kit/http/middleware"
 )
 
-//nolint:bodyclose
 func TestServerHeader(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)

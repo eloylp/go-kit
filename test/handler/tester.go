@@ -46,7 +46,7 @@ func Tester(cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) func
 				rec, req := httptest.NewRecorder(), httptest.NewRequest(tt.Method, tt.Path, tt.Body) //nolint:scopelint
 				req.Header = tt.Headers                                                              //nolint:scopelint
 				router.ServeHTTP(rec, req)
-				res := rec.Result() //nolint:bodyclose
+				res := rec.Result()
 				body, err := ioutil.ReadAll(res.Body)
 				if err != nil {
 					t.Fatal(err)

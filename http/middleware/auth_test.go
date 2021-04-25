@@ -59,7 +59,7 @@ func TestAuthChecker(t *testing.T) {
 			rec := httptest.NewRecorder()
 			mid := middleware.AuthChecker(cfg)
 			mid(nullHandler).ServeHTTP(rec, req)
-			assert.Equal(t, c.ExpectedHTTPCode, rec.Result().StatusCode) //nolint: bodyclose
+			assert.Equal(t, c.ExpectedHTTPCode, rec.Result().StatusCode)
 		})
 	}
 }
