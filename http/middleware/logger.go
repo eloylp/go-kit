@@ -7,8 +7,8 @@ import (
 )
 
 // RequestLogger will log the client request
-// information on each request. Accepts logrus
-// as logger.
+// information on each request at Debug level.
+// Accepts logrus as logger.
 func RequestLogger(logger *logrus.Logger) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
