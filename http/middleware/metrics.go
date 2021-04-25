@@ -11,7 +11,7 @@ import (
 // and register them on a given Prometheus registry. It will use an histogram
 // where the client code can define its custom buckets. The client application
 // could also specify a namespace to not collide with other similar metrics names.
-func RequestDurationObserver(namespace string, registry *prometheus.Registry, buckets []float64) Middleware {
+func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64) Middleware {
 	observer := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Subsystem: "http_request",
