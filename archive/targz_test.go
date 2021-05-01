@@ -1,3 +1,4 @@
+//nolint:gosec
 package archive_test
 
 import (
@@ -92,7 +93,7 @@ func TestExtractTARGZ(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		md5Hash := fmt.Sprintf("%x", md5.Sum(fileContent))
+		md5Hash := fmt.Sprintf("%x", md5.Sum(fileContent)) //nolint:gosec
 		assert.Equal(t, expectedMd5, md5Hash)
 		return nil
 	})

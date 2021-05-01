@@ -32,7 +32,7 @@ linters-settings:
         # don't include the "operation" and "assign"
         checks: argument,case,condition,return
   govet:
-    check-shadowing: true
+    check-shadowing: false
     settings:
       printf:
         funcs:
@@ -103,14 +103,6 @@ issues:
       linters:
         - gomnd
         - bodyclose
-
-#run:
-#  skip-dirs:
-#    - test/testdata_etc
-
-# golangci.com configuration
-# https://github.com/golangci/golangci/wiki/Configuration
+        - gosec
 service:
   golangci-lint-version: 1.37.1 # use the fixed version to not introduce new linters unexpectedly
-  prepare:
-    - echo "here I can run custom commands, but no preparation needed for this repo"
