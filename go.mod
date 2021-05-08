@@ -1,4 +1,4 @@
-module github.com/eloylp/kit
+module go.eloylp.dev/kit
 
 go 1.16
 
