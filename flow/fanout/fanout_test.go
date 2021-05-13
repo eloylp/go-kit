@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/kit/flow/fanout"
 	"go.eloylp.dev/kit/flow/fanout/fanouttest"
@@ -54,7 +55,7 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 	elems := 3
 	fanouttest.Populate(fo, elems)
 	err := fo.Unsubscribe(uuid)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 1, fo.SubscribersLen())
 	// exhaust channel
 	var count int
@@ -77,7 +78,7 @@ func TestBufferedFanOut_Unsubscribe_WithCancelFunc(t *testing.T) {
 	elems := 3
 	fanouttest.Populate(fo, elems)
 	err := cancel()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 1, fo.SubscribersLen())
 	// exhaust channel
 	var count int
@@ -168,7 +169,7 @@ func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
 	fo.Add([]int{1, 1})
 	fo.Add([]int{2, 2})
 	err := cancel()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	want := fanout.Status{
 		uid2: 2,
 	}

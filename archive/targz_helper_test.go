@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 
 func AssertTARGZMD5Sums(t *testing.T, r io.Reader, expectedElems map[string]string) {
 	gzipReader, err := gzip.NewReader(r)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	tarReader := tar.NewReader(gzipReader)
 	elems := map[string]string{}
 	for {

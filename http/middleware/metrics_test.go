@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/kit/http/middleware"
 )
@@ -29,7 +30,7 @@ func TestRequestDurationObserver(t *testing.T) {
 	ph.ServeHTTP(rec, req)
 
 	respMetrics, err := ioutil.ReadAll(rec.Body)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	metrics := string(respMetrics)
 
 	assert.Contains(t, metrics, "# TYPE app_http_request_duration_seconds histogram")
