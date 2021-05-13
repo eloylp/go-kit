@@ -3,7 +3,7 @@ package pathutil_test
 import (
 	"testing"
 
-	"github.com/eloylp/kit/pathutil"
+	"go.eloylp.dev/kit/pathutil"
 )
 
 //nolint:scopelint

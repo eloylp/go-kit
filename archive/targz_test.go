@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/eloylp/kit/archive"
+	"go.eloylp.dev/kit/archive"
 )
 
 func TestCreateTARGZFromDir(t *testing.T) {

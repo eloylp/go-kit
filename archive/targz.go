@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/eloylp/kit/pathutil"
+	"go.eloylp.dev/kit/pathutil"
 )
 
 // CreateTARGZ will write a compressed .tar.gz stream to the passed io.Writer

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/eloylp/kit/test/check"
+	. "go.eloylp.dev/kit/test/check"
 )
 
 func TestContains_success(t *testing.T) {

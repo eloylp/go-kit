@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/eloylp/kit/test/check"
-	"github.com/eloylp/kit/test/handler"
+	"go.eloylp.dev/kit/test/check"
+	"go.eloylp.dev/kit/test/handler"
 )
 
 func router() http.Handler {

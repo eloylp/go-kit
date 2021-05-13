@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/eloylp/kit/http/middleware"
+	"go.eloylp.dev/kit/http/middleware"
 )
 
 func TestRequestLogger(t *testing.T) {

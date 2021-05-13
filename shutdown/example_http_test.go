@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eloylp/kit/shutdown"
+	"go.eloylp.dev/kit/shutdown"
 )
 
 func ExampleWithOSSignals() {

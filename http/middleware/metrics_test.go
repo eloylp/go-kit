@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/eloylp/kit/http/middleware"
+	"go.eloylp.dev/kit/http/middleware"
 )
 
 func TestRequestDurationObserver(t *testing.T) {

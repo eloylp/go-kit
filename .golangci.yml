@@ -23,7 +23,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/eloylp/kit
+    local-prefixes: go.eloylp.dev/kit
   golint:
     min-confidence: 0
   gomnd:

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/eloylp/kit/test/check"
+	"go.eloylp.dev/kit/test/check"
 )
 
 // Case represents a test case for an HTTP handler.

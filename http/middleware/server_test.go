@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/eloylp/kit/http/middleware"
+	"go.eloylp.dev/kit/http/middleware"
 )
 
 func TestServerHeader(t *testing.T) {
