@@ -27,7 +27,8 @@ type EndpointMapper interface {
 // where the client code can define its custom buckets. The client application
 // could also specify a namespace to not collide with other similar metrics names in the same runtime.
 // Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
-func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64, endpointMapper EndpointMapper) Middleware {
+func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64,
+	endpointMapper EndpointMapper) Middleware {
 	observer := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Subsystem: "http_request",
