@@ -22,6 +22,7 @@ func TestRequestDurationObserver(t *testing.T) {
 
 	mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
+		_, _ = w.Write([]byte("hello"))
 	})).ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -34,11 +35,11 @@ func TestRequestDurationObserver(t *testing.T) {
 	metrics := string(respMetrics)
 
 	assert.Contains(t, metrics, "# TYPE app_http_request_duration_seconds histogram")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{le=\"0.05\"} 0")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{le=\"0.08\"} 0")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{le=\"0.1\"} 0")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{le=\"0.2\"} 1")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{le=\"+Inf\"} 1")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_sum")
-	assert.Contains(t, metrics, "app_http_request_duration_seconds_count 1")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{code=\"200\",le=\"0.05\"} 0")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{code=\"200\",le=\"0.08\"} 0")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{code=\"200\",le=\"0.1\"} 0")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{code=\"200\",le=\"0.2\"} 1")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_bucket{code=\"200\",le=\"+Inf\"} 1")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_sum{code=\"200\"}")
+	assert.Contains(t, metrics, "app_http_request_duration_seconds_count{code=\"200\"} 1")
 }
