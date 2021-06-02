@@ -42,7 +42,7 @@ func RequestDurationObserver(namespace string, registry prometheus.Registerer, b
 			h.ServeHTTP(nw, r)
 			duration := time.Since(start)
 			statusCode := strconv.Itoa(nw.Status())
-			endpoint := endpointMapper.Map(r.URL.String())
+			endpoint := endpointMapper.Map(r.RequestURI)
 			observer.WithLabelValues(r.Method, statusCode, endpoint).Observe(duration.Seconds())
 		})
 	}
