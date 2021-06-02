@@ -9,6 +9,15 @@ import (
 	"github.com/urfave/negroni"
 )
 
+// EndpointMapper represents a way to map an http.Request.URL.String(),
+// to its respective handler. This responsibility is delegated to the
+// client code. http.Request.URL.String() cannot be mapped directly
+// to a metrics label due to combinatorial explosion. This means a path
+// can contain /product/[0-9] and each ID will generate a new whole
+// time series in a metrics system like prometheus.
+// The recommendation is to wrap some efficient implementation for
+// properly matching prefixes. The recommendation is to use something
+// like a Radix tree implementation. See  https://github.com/hashicorp/go-immutable-radix .
 type EndpointMapper interface {
 	Map(url string) string
 }
@@ -17,6 +26,7 @@ type EndpointMapper interface {
 // and register them on a given Prometheus registry. It will use an histogram
 // where the client code can define its custom buckets. The client application
 // could also specify a namespace to not collide with other similar metrics names in the same runtime.
+// Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
 func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64, endpointMapper EndpointMapper) Middleware {
 	observer := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
