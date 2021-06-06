@@ -28,7 +28,7 @@ func TestApply(t *testing.T) {
 			h.ServeHTTP(w, r)
 		})
 	}
-	a := middleware.InFrontOf(h, m1, m2)
+	a := middleware.For(h, m1, m2)
 	rec := httptest.NewRecorder()
 	a.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
 	expected := `middleware1_write
