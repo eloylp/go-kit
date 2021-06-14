@@ -27,18 +27,18 @@ func CreateTARGZ(writer io.Writer, path string) (int64, error) {
 
 	pathInfo, err := os.Stat(path)
 	if err != nil {
-		return 0, fmt.Errorf("CreateTARGZ(): %w", err) //nolint:golint
+		return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
 	}
 	if !pathInfo.IsDir() {
 		b, err := tarFromFile(path, tarReader)
 		if err != nil {
-			return 0, fmt.Errorf("CreateTARGZ(): %w", err) //nolint:golint
+			return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
 		}
 		return b, nil
 	}
 	b, err := tarFromDir(path, tarReader)
 	if err != nil {
-		return 0, fmt.Errorf("CreateTARGZ(): %w", err) //nolint:golint
+		return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
 	}
 	return b, nil
 }
@@ -70,7 +70,7 @@ func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {
 		return nil
 	})
 	if err != nil {
-		return 0, err //nolint:golint
+		return 0, err
 	}
 	return totalFileBytes, nil
 }
@@ -119,11 +119,11 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 // The returned written bytes does not include headers.
 func ExtractTARGZ(stream io.Reader, path string) (int64, error) {
 	if !filepath.IsAbs(path) {
-		return 0, fmt.Errorf("error at ExtractTARGZ(): the extraction path must be absolute")
+		return 0, fmt.Errorf("at ExtractTARGZ(): the extraction path must be absolute")
 	}
 	gzipReader, err := gzip.NewReader(stream)
 	if err != nil {
-		return 0, fmt.Errorf("ExtractTARGZ(): failed reading compressed gzip: %w " + err.Error())
+		return 0, fmt.Errorf("at ExtractTARGZ(): failed reading compressed gzip: %w " + err.Error())
 	}
 	tarReader := tar.NewReader(gzipReader)
 	var totalFileBytes int64
@@ -133,38 +133,38 @@ func ExtractTARGZ(stream io.Reader, path string) (int64, error) {
 			break
 		}
 		if err != nil {
-			return 0, fmt.Errorf("ExtractTARGZ(): failed reading next part of tar: %w", err) //nolint:golint
+			return 0, fmt.Errorf("at ExtractTARGZ(): failed reading next part of tar: %w", err)
 		}
 		extractionPath := filepath.Join(path, header.Name) //nolint:gosec
 		err = pathutil.PathInRoot(path, extractionPath)
 		if err != nil {
-			return 0, fmt.Errorf("error at ExtractTARGZ(): %w", err)
+			return 0, fmt.Errorf("at ExtractTARGZ(): %w", err)
 		}
 		// Start processing types
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(extractionPath, 0755); err != nil {
-				return 0, fmt.Errorf("ExtractTARGZ(): failed creating dir %s part of tar: %w", path, err) //nolint:golint
+				return 0, fmt.Errorf("at ExtractTARGZ(): failed creating dir %s part of tar: %w", path, err)
 			}
 		case tar.TypeReg:
 			dir := filepath.Dir(extractionPath)
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return 0, fmt.Errorf("ExtractTARGZ(): failed creating dir %s part of tar: %w ", dir, err) //nolint:golint
+				return 0, fmt.Errorf("at ExtractTARGZ(): failed creating dir %s part of tar: %w ", dir, err)
 			}
 			outFile, err := os.Create(extractionPath)
 			if err != nil {
-				return 0, fmt.Errorf("ExtractTARGZ(): failed creating file part %s of tar: %w", path, err) //nolint:golint
+				return 0, fmt.Errorf("at ExtractTARGZ(): failed creating file part %s of tar: %w", path, err)
 			}
 			b, err := io.Copy(outFile, tarReader) // nolinter: gosec (must be controlled by read/write timeouts)
 			if err != nil {
-				return 0, fmt.Errorf("ExtractTARGZ(): failed copying data of file %s part of tar: %v", path, err) //nolint:golint
-			} //nolint:golint
+				return 0, fmt.Errorf("at ExtractTARGZ(): failed copying data of file %s part of tar: %v", path, err)
+			}
 			totalFileBytes += b
 			if err := outFile.Close(); err != nil {
-				return totalFileBytes, fmt.Errorf("ExtractTARGZ(): failed closing file %s part of tar: %v", path, err) //nolint:golint
-			} //nolint:golint
+				return totalFileBytes, fmt.Errorf("at ExtractTARGZ(): failed closing file %s part of tar: %v", path, err)
+			}
 		default:
-			return 0, fmt.Errorf("ExtractTARGZ(): unknown part of tar: type: %v in %s", header.Typeflag, header.Name) //nolint:golint
+			return 0, fmt.Errorf("at ExtractTARGZ(): unknown part of tar: type: %v in %s", header.Typeflag, header.Name)
 		}
 	}
 	return totalFileBytes, nil
