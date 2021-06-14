@@ -129,3 +129,9 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 		filepath.Join(rootDir, "scalated-to-root"))
 	assert.EqualError(t, err, expected)
 }
+
+func TestExtractTARGZDoesNotAcceptRelativePaths(t *testing.T) {
+	buffer := bytes.NewReader(nil)
+	_, err := archive.ExtractTARGZ(buffer, "relative/one")
+	assert.EqualError(t, err, "error at ExtractTARGZ(): the extraction path must be absolute")
+}
