@@ -110,6 +110,11 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 
 // ExtractTARGZ will read the provided stream, that is supposed to be
 // a tar.gz one and extract all the elements in the provided path.
+//
+// It will prevent directory escalation. If one of the headers contains
+// a path outside the provided one, will return an error and will not
+// clean operation done until that moment.
+//
 // The returned written bytes does not include headers.
 func ExtractTARGZ(stream io.Reader, path string) (int64, error) {
 	gzipReader, err := gzip.NewReader(stream)
@@ -127,6 +132,10 @@ func ExtractTARGZ(stream io.Reader, path string) (int64, error) {
 			return 0, fmt.Errorf("ExtractTARGZ(): failed reading next part of tar: %w", err) //nolint:golint
 		}
 		extractionPath := filepath.Join(path, header.Name) //nolint:gosec
+		err = pathutil.PathInRoot(path, extractionPath)
+		if err != nil {
+			return 0, fmt.Errorf("error at ExtractTARGZ(): %w", err)
+		}
 		// Start processing types
 		switch header.Typeflag {
 		case tar.TypeDir:

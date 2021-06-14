@@ -2,6 +2,9 @@
 package archive_test
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"crypto/md5"
 	"fmt"
 	"io/fs"
@@ -99,4 +102,30 @@ func TestExtractTARGZ(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
+}
+
+func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
+	rootDir := t.TempDir()
+	targetDir := filepath.Join(rootDir, "sub")
+
+	// Prepare a tar.gz test fixture, that will include a header name trying to scale
+	// to other dirs.
+	buff := bytes.NewBuffer(nil)
+	gw := gzip.NewWriter(buff)
+	tw := tar.NewWriter(gw)
+	fileHeaderName := "../scalated-to-root"
+	require.NoError(t, tw.WriteHeader(&tar.Header{
+		Typeflag: tar.TypeReg,
+		Name:     fileHeaderName,
+		Size:     70,
+	}))
+	_, err := tw.Write([]byte("Hello, im the content of a file that will be placed in the wrong place"))
+	require.NoError(t, err)
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+
+	_, err = archive.ExtractTARGZ(buff, targetDir)
+	expected := fmt.Sprintf("error at ExtractTARGZ(): the path you provided %s is not a suitable one",
+		filepath.Join(rootDir, "scalated-to-root"))
+	assert.EqualError(t, err, expected)
 }
