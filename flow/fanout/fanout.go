@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"go.eloylp.dev/kit/moment"
-
 	guuid "github.com/google/uuid"
+
+	"go.eloylp.dev/kit/moment"
 )
 
 // Status represents a report about how much
