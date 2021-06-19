@@ -13,8 +13,8 @@ func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}
-	b.ResetTimer()
 	data := make([]byte, msgLen)
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		fo.Add(data)
 	}
