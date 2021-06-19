@@ -19,7 +19,7 @@ func WaitTCPService(t *testing.T, addr string, interval, maxWait time.Duration) 
 	for {
 		select {
 		case <-ctx.Done():
-			t.Fatalf("TryConnectTo(): %v", ctx.Err())
+			t.Fatalf("WaitTCPService(): %v", ctx.Err())
 		default:
 			con, conErr := net.Dial("tcp", addr)
 			if conErr == nil {
