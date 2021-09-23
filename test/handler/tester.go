@@ -52,9 +52,7 @@ func Tester(cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) func
 					t.Fatal(err)
 				}
 				for _, chk := range tt.Checkers { //nolint:scopelint
-					if err := chk(res, body); err != nil {
-						t.Errorf("FAILED %s: %v", name, err)
-					}
+					chk(t, res, body)
 				}
 				if tearDown != nil {
 					tearDown(t)
