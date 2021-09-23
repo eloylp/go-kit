@@ -37,12 +37,12 @@ type TestAuxFunc func(t *testing.T)
 // For the TestAuxFunc you can still pass nil , if yo dont have any logic for them.
 func Tester(cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) func(t *testing.T) {
 	return func(t *testing.T) {
+		if setUp != nil {
+			setUp(t)
+		}
 		for _, tt := range cases {
 			name := fmt.Sprintf("path: %s, method: %s, case: %q", tt.Path, tt.Method, tt.Case)
 			t.Run(name, func(t *testing.T) {
-				if setUp != nil {
-					setUp(t)
-				}
 				rec, req := httptest.NewRecorder(), httptest.NewRequest(tt.Method, tt.Path, tt.Body) //nolint:scopelint
 				req.Header = tt.Headers                                                              //nolint:scopelint
 				router.ServeHTTP(rec, req)
@@ -54,10 +54,10 @@ func Tester(cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) func
 				for _, chk := range tt.Checkers { //nolint:scopelint
 					chk(t, res, body)
 				}
-				if tearDown != nil {
-					tearDown(t)
-				}
 			})
+		}
+		if tearDown != nil {
+			tearDown(t)
 		}
 	}
 }
