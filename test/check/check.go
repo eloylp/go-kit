@@ -17,7 +17,7 @@ type Function func(t *testing.T, w *http.Response, body []byte)
 // of an HTTP handler.
 func Contains(want string) Function {
 	return func(t *testing.T, _ *http.Response, body []byte) {
-		require.Contains(t, want, string(body))
+		require.Contains(t, string(body), want)
 	}
 }
 
