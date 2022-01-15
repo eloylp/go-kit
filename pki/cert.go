@@ -31,10 +31,10 @@ type Opt func(cert *x509.Certificate)
 //
 // The resultant *tls.Certificate can be used directly in a
 // *tls.Config of the server.
-func SelfSignedCert(opts ...Opt) (*tls.Certificate, error) {
+func SelfSignedCert(opts ...Opt) (tls.Certificate, error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, err
+		return tls.Certificate{}, err
 	}
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
@@ -54,13 +54,13 @@ func SelfSignedCert(opts ...Opt) (*tls.Certificate, error) {
 	}
 	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, publicKey(privateKey), privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("pki: self-signed cert: %w", err)
+		return tls.Certificate{}, fmt.Errorf("pki: self-signed cert: %w", err)
 	}
 	x509Cert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
-		return nil, fmt.Errorf("pki: self-signed cert: %w", err)
+		return tls.Certificate{}, fmt.Errorf("pki: self-signed cert: %w", err)
 	}
-	tlsCert := &tls.Certificate{
+	tlsCert := tls.Certificate{
 		Certificate: [][]byte{x509Cert.Raw},
 		PrivateKey:  privateKey,
 		Leaf:        x509Cert,
