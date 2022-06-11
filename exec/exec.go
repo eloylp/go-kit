@@ -18,9 +18,9 @@ func Parallelize(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, f f
 		case inProgressJobs <- struct{}{}:
 			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				f()
 				<-inProgressJobs
-				wg.Done()
 			}()
 		}
 	}
