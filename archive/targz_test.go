@@ -23,7 +23,7 @@ func TestCreateTARGZFromDir(t *testing.T) {
 	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
 	tarGzFile, err := os.Create(tarGzFilePath)
 	require.NoError(t, err)
-	wBytes, err := archive.CreateTARGZ(tarGzFile, Root)
+	wBytes, err := archive.StreamTARGZ(tarGzFile, Root)
 	require.NoError(t, err)
 	err = tarGzFile.Close()
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestCreateTARGZUniqueFile(t *testing.T) {
 	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
 	tarGzFile, err := os.Create(tarGzFilePath)
 	require.NoError(t, err)
-	_, err = archive.CreateTARGZ(tarGzFile, fmt.Sprintf("%s/notes/subnotes/notes.txt", Root))
+	_, err = archive.StreamTARGZ(tarGzFile, fmt.Sprintf("%s/notes/subnotes/notes.txt", Root))
 	require.NoError(t, err)
 	err = tarGzFile.Close()
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestExtractTARGZ(t *testing.T) {
 	tmpDir := t.TempDir()
 	tarGz, err := os.Open(RootTARGZ)
 	require.NoError(t, err)
-	wBytes, err := archive.ExtractTARGZ(tarGz, tmpDir)
+	wBytes, err := archive.ExtractTARGZStream(tarGz, tmpDir)
 	require.NoError(t, err)
 	assert.Equal(t, RootSize, wBytes)
 
@@ -124,7 +124,7 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 	require.NoError(t, tw.Close())
 	require.NoError(t, gw.Close())
 
-	_, err = archive.ExtractTARGZ(buff, targetDir)
+	_, err = archive.ExtractTARGZStream(buff, targetDir)
 	expected := fmt.Sprintf("at ExtractTARGZ(): the path you provided %s is not a suitable one",
 		filepath.Join(rootDir, "scalated-to-root"))
 	assert.EqualError(t, err, expected)
@@ -132,6 +132,6 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 
 func TestExtractTARGZDoesNotAcceptRelativePaths(t *testing.T) {
 	buffer := bytes.NewReader(nil)
-	_, err := archive.ExtractTARGZ(buffer, "relative/one")
+	_, err := archive.ExtractTARGZStream(buffer, "relative/one")
 	assert.EqualError(t, err, "at ExtractTARGZ(): the extraction path must be absolute")
 }

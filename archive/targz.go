@@ -14,12 +14,12 @@ import (
 	"go.eloylp.dev/kit/pathutil"
 )
 
-// CreateTARGZ will write a compressed .tar.gz stream to the passed io.Writer
+// StreamTARGZ will write a compressed .tar.gz stream to the passed io.Writer
 // from the specified path. If the path is a directory, it will find all files
 // and folder recursively and add it to the tar.gz stream. If the path passed is
 // a single file, will only add that file to the stream.
 // The returned written bytes does not include headers.
-func CreateTARGZ(writer io.Writer, path string) (int64, error) {
+func StreamTARGZ(writer io.Writer, path string) (int64, error) {
 	gzipReader := gzip.NewWriter(writer)
 	defer gzipReader.Close()
 	tarReader := tar.NewWriter(gzipReader)
@@ -108,7 +108,7 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 	return b, nil
 }
 
-// ExtractTARGZ will read the provided stream, that is supposed to be
+// ExtractTARGZStream will read the provided stream, that is supposed to be
 // a tar.gz one and extract all the elements in the provided path. The
 // provided path must be an absolute one.
 //
@@ -117,7 +117,7 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 // clean operation done until that moment.
 //
 // The returned written bytes does not include headers.
-func ExtractTARGZ(stream io.Reader, path string) (int64, error) {
+func ExtractTARGZStream(stream io.Reader, path string) (int64, error) {
 	if !filepath.IsAbs(path) {
 		return 0, fmt.Errorf("at ExtractTARGZ(): the extraction path must be absolute")
 	}
