@@ -21,14 +21,12 @@ import (
 func TestCreateTARGZFromDir(t *testing.T) {
 	tmpDir := t.TempDir()
 	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
-	tarGzFile, err := os.Create(tarGzFilePath)
-	require.NoError(t, err)
-	wBytes, err := archive.StreamTARGZ(tarGzFile, Root)
-	require.NoError(t, err)
-	err = tarGzFile.Close()
+
+	wBytes, err := archive.TARGZ(tarGzFilePath, Root)
 	require.NoError(t, err)
 	assert.Equal(t, RootSize, wBytes)
-	tarGzFile, err = os.Open(tarGzFilePath)
+
+	tarGzFile, err := os.Open(tarGzFilePath)
 	require.NoError(t, err)
 	defer tarGzFile.Close()
 	AssertTARGZMD5Sums(t, tarGzFile, map[string]string{
@@ -61,9 +59,8 @@ func TestCreateTARGZUniqueFile(t *testing.T) {
 
 func TestExtractTARGZ(t *testing.T) {
 	tmpDir := t.TempDir()
-	tarGz, err := os.Open(RootTARGZ)
-	require.NoError(t, err)
-	wBytes, err := archive.ExtractTARGZStream(tarGz, tmpDir)
+
+	wBytes, err := archive.ExtractTARGZ(tmpDir, RootTARGZ)
 	require.NoError(t, err)
 	assert.Equal(t, RootSize, wBytes)
 

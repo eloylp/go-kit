@@ -14,6 +14,17 @@ import (
 	"go.eloylp.dev/kit/pathutil"
 )
 
+// TARGZ creates a new tar.gz file by inspecting the
+// provided source.
+func TARGZ(file, src string) (int64, error) {
+	f, err := os.Create(file)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	return StreamTARGZ(f, src)
+}
+
 // StreamTARGZ will write a compressed .tar.gz stream to the passed io.Writer
 // from the specified path. If the path is a directory, it will find all files
 // and folder recursively and add it to the tar.gz stream. If the path passed is
@@ -106,6 +117,17 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 		return 0, err
 	}
 	return b, nil
+}
+
+// ExtractTARGZ will extract the provided tar.gz file
+// into the provided path.
+func ExtractTARGZ(dst, tarFile string) (int64, error) {
+	f, err := os.Open(tarFile)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	return ExtractTARGZStream(f, dst)
 }
 
 // ExtractTARGZStream will read the provided stream, that is supposed to be
