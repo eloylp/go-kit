@@ -14,10 +14,10 @@ import (
 	"go.eloylp.dev/kit/pathutil"
 )
 
-// TARGZ creates a new tar.gz file by inspecting the
-// provided sources.
-func TARGZ(file string, srcPaths ...string) (int64, error) {
-	f, err := os.Create(file)
+// TARGZ creates a new tar.gz file in the provided path
+// by inspecting the provided sources.
+func TARGZ(filePath string, srcPaths ...string) (int64, error) {
+	f, err := os.Create(filePath)
 	if err != nil {
 		return 0, err
 	}
@@ -26,10 +26,10 @@ func TARGZ(file string, srcPaths ...string) (int64, error) {
 }
 
 // StreamTARGZ will write a compressed .tar.gz stream to the passed io.Writer
-// from the specified path. If the path is a directory, it will find all files
+// from the specified paths. If the path is a directory, it will find all files
 // and folder recursively and add it to the tar.gz stream. If the path passed is
 // a single file, will only add that file to the stream.
-// The returned written bytes does not include headers.
+// The returned written bytes does not include headers size.
 func StreamTARGZ(writer io.Writer, paths ...string) (int64, error) {
 	gzipReader := gzip.NewWriter(writer)
 	defer gzipReader.Close()
@@ -60,7 +60,7 @@ func StreamTARGZ(writer io.Writer, paths ...string) (int64, error) {
 }
 
 func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {
-	var totalFileBytes int64
+	var totalBytes int64
 	err := filepath.Walk(path, func(currentPath string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -81,18 +81,18 @@ func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {
 			if err != nil {
 				return err
 			}
-			totalFileBytes += b
+			totalBytes += b
 		}
 		return nil
 	})
 	if err != nil {
 		return 0, err
 	}
-	return totalFileBytes, nil
+	return totalBytes, nil
 }
 
-func tarFromFile(filePath string, tarStream *tar.Writer) (int64, error) {
-	fileInfo, err := os.Stat(filePath)
+func tarFromFile(path string, tarStream *tar.Writer) (int64, error) {
+	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return 0, err
 	}
@@ -100,11 +100,11 @@ func tarFromFile(filePath string, tarStream *tar.Writer) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	header.Name = filepath.Base(filePath)
+	header.Name = filepath.Base(path)
 	if err := tarStream.WriteHeader(header); err != nil {
 		return 0, err
 	}
-	b, err := appendToWriter(tarStream, filePath)
+	b, err := appendToWriter(tarStream, path)
 	if err != nil {
 		return 0, err
 	}
@@ -153,7 +153,7 @@ func ExtractTARGZStream(stream io.Reader, path string) (int64, error) {
 		return 0, fmt.Errorf("at ExtractTARGZ(): failed reading compressed gzip: %w " + err.Error())
 	}
 	tarReader := tar.NewReader(gzipReader)
-	var totalFileBytes int64
+	var totalBytes int64
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -186,13 +186,13 @@ func ExtractTARGZStream(stream io.Reader, path string) (int64, error) {
 			if err != nil {
 				return 0, fmt.Errorf("at ExtractTARGZ(): failed copying data of file %s part of tar: %v", path, err)
 			}
-			totalFileBytes += b
+			totalBytes += b
 			if err := outFile.Close(); err != nil {
-				return totalFileBytes, fmt.Errorf("at ExtractTARGZ(): failed closing file %s part of tar: %v", path, err)
+				return totalBytes, fmt.Errorf("at ExtractTARGZ(): failed closing file %s part of tar: %v", path, err)
 			}
 		default:
 			return 0, fmt.Errorf("at ExtractTARGZ(): unknown part of tar: type: %v in %s", header.Typeflag, header.Name)
 		}
 	}
-	return totalFileBytes, nil
+	return totalBytes, nil
 }
