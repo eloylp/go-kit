@@ -15,14 +15,14 @@ import (
 )
 
 // TARGZ creates a new tar.gz file by inspecting the
-// provided source.
-func TARGZ(file, src string) (int64, error) {
+// provided sources.
+func TARGZ(file string, srcPaths ...string) (int64, error) {
 	f, err := os.Create(file)
 	if err != nil {
 		return 0, err
 	}
 	defer f.Close()
-	return StreamTARGZ(f, src)
+	return StreamTARGZ(f, srcPaths...)
 }
 
 // StreamTARGZ will write a compressed .tar.gz stream to the passed io.Writer
@@ -30,28 +30,33 @@ func TARGZ(file, src string) (int64, error) {
 // and folder recursively and add it to the tar.gz stream. If the path passed is
 // a single file, will only add that file to the stream.
 // The returned written bytes does not include headers.
-func StreamTARGZ(writer io.Writer, path string) (int64, error) {
+func StreamTARGZ(writer io.Writer, paths ...string) (int64, error) {
 	gzipReader := gzip.NewWriter(writer)
 	defer gzipReader.Close()
 	tarReader := tar.NewWriter(gzipReader)
 	defer tarReader.Close()
 
-	pathInfo, err := os.Stat(path)
-	if err != nil {
-		return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
-	}
-	if !pathInfo.IsDir() {
-		b, err := tarFromFile(path, tarReader)
+	var totalBytes int64
+	for _, path := range paths {
+		pathInfo, err := os.Stat(path)
 		if err != nil {
 			return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
 		}
-		return b, nil
+		if !pathInfo.IsDir() {
+			b, err := tarFromFile(path, tarReader)
+			if err != nil {
+				return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
+			}
+			totalBytes += b
+			continue
+		}
+		b, err := tarFromDir(path, tarReader)
+		if err != nil {
+			return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
+		}
+		totalBytes += b
 	}
-	b, err := tarFromDir(path, tarReader)
-	if err != nil {
-		return 0, fmt.Errorf("at CreateTARGZ(): %w", err)
-	}
-	return b, nil
+	return totalBytes, nil
 }
 
 func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {

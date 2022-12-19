@@ -18,11 +18,11 @@ import (
 	"go.eloylp.dev/kit/archive"
 )
 
-func TestCreateTARGZFromDir(t *testing.T) {
+func TestCreateTARGZ(t *testing.T) {
 	tmpDir := t.TempDir()
 	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
 
-	wBytes, err := archive.TARGZ(tarGzFilePath, Root)
+	wBytes, err := archive.TARGZ(tarGzFilePath, Root+"/gnu.png", Root+"/tux.png", Root+"/notes")
 	require.NoError(t, err)
 	assert.Equal(t, RootSize, wBytes)
 
@@ -32,28 +32,10 @@ func TestCreateTARGZFromDir(t *testing.T) {
 	AssertTARGZMD5Sums(t, tarGzFile, map[string]string{
 		".":                        "",
 		"gnu.png":                  GnuTestFileMD5,
-		"notes":                    "",
-		"notes/notes.txt":          NotesTestFileMD5,
-		"notes/subnotes":           "",
-		"notes/subnotes/notes.txt": SubNotesTestFileMD5,
 		"tux.png":                  TuxTestFileMD5,
-	})
-}
-
-func TestCreateTARGZUniqueFile(t *testing.T) {
-	tmpDir := t.TempDir()
-	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
-	tarGzFile, err := os.Create(tarGzFilePath)
-	require.NoError(t, err)
-	_, err = archive.StreamTARGZ(tarGzFile, fmt.Sprintf("%s/notes/subnotes/notes.txt", Root))
-	require.NoError(t, err)
-	err = tarGzFile.Close()
-	require.NoError(t, err)
-	tarGzFile, err = os.Open(tarGzFilePath)
-	require.NoError(t, err)
-	defer tarGzFile.Close()
-	AssertTARGZMD5Sums(t, tarGzFile, map[string]string{
-		"notes.txt": SubNotesTestFileMD5,
+		"notes.txt":          NotesTestFileMD5,
+		"subnotes":           "",
+		"subnotes/notes.txt": SubNotesTestFileMD5,
 	})
 }
 
