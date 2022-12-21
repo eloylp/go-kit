@@ -20,16 +20,16 @@ import (
 
 func TestCreateTARGZ(t *testing.T) {
 	tmpDir := t.TempDir()
-	tarGzFilePath := fmt.Sprintf("%s/test.tar.gz", tmpDir)
+	path := fmt.Sprintf("%s/test.tar.gz", tmpDir)
 
-	wBytes, err := archive.TARGZ(tarGzFilePath, Root+"/gnu.png", Root+"/tux.png", Root+"/notes")
+	wBytes, err := archive.TARGZ(path, Root+"/gnu.png", Root+"/tux.png", Root+"/notes")
 	require.NoError(t, err)
 	assert.Equal(t, RootSize, wBytes)
 
-	tarGzFile, err := os.Open(tarGzFilePath)
+	file, err := os.Open(path)
 	require.NoError(t, err)
-	defer tarGzFile.Close()
-	AssertMD5Sums(t, tarGzFile, map[string]string{
+	defer file.Close()
+	AssertMD5Sums(t, file, map[string]string{
 		".":                  "",
 		"gnu.png":            GnuTestFileMD5,
 		"tux.png":            TuxTestFileMD5,
