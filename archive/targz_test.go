@@ -30,9 +30,9 @@ func TestCreateTARGZ(t *testing.T) {
 	require.NoError(t, err)
 	defer tarGzFile.Close()
 	AssertTARGZMD5Sums(t, tarGzFile, map[string]string{
-		".":                        "",
-		"gnu.png":                  GnuTestFileMD5,
-		"tux.png":                  TuxTestFileMD5,
+		".":                  "",
+		"gnu.png":            GnuTestFileMD5,
+		"tux.png":            TuxTestFileMD5,
 		"notes.txt":          NotesTestFileMD5,
 		"subnotes":           "",
 		"subnotes/notes.txt": SubNotesTestFileMD5,
@@ -104,7 +104,7 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 	require.NoError(t, gw.Close())
 
 	_, err = archive.ExtractTARGZStream(buff, targetDir)
-	expected := fmt.Sprintf("at ExtractTARGZ(): the path you provided %s is not a suitable one",
+	expected := fmt.Sprintf("path in root check: the path you provided %s is not a suitable one",
 		filepath.Join(rootDir, "scalated-to-root"))
 	assert.EqualError(t, err, expected)
 }
@@ -112,5 +112,5 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 func TestExtractTARGZDoesNotAcceptRelativePaths(t *testing.T) {
 	buffer := bytes.NewReader(nil)
 	_, err := archive.ExtractTARGZStream(buffer, "relative/one")
-	assert.EqualError(t, err, "at ExtractTARGZ(): the extraction path must be absolute")
+	assert.EqualError(t, err, "the extraction path must be absolute")
 }
