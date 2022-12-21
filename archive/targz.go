@@ -150,7 +150,7 @@ func ExtractTARGZStream(stream io.Reader, path string) (int64, error) {
 	}
 	gzipReader, err := gzip.NewReader(stream)
 	if err != nil {
-		return 0, fmt.Errorf("failed reading compressed gzip: %v " + err.Error())
+		return 0, fmt.Errorf("failed reading compressed gzip: %v", err)
 	}
 	tarReader := tar.NewReader(gzipReader)
 	var totalBytes int64
