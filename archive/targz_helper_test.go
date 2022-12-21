@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -31,7 +30,7 @@ const (
 // will be in the place of the sum.
 func AssertMD5Sums(t *testing.T, r io.Reader, expected map[string]string) {
 	gzipReader, err := gzip.NewReader(r)
-	require.NoError(t, err)
+	mustNoErr(err)
 	tarReader := tar.NewReader(gzipReader)
 	contents := map[string]string{}
 	for {
@@ -54,4 +53,10 @@ func AssertMD5Sums(t *testing.T, r io.Reader, expected map[string]string) {
 		contents[h.Name] = ""
 	}
 	assert.Equal(t, expected, contents)
+}
+
+func mustNoErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

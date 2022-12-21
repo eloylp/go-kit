@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/kit/archive"
 )
@@ -23,11 +22,11 @@ func TestCreateTARGZ(t *testing.T) {
 	path := fmt.Sprintf("%s/test.tar.gz", tmpDir)
 
 	wBytes, err := archive.TARGZ(path, Root+"/gnu.png", Root+"/tux.png", Root+"/notes")
-	require.NoError(t, err)
+	mustNoErr(err)
 	assert.Equal(t, RootSize, wBytes)
 
 	file, err := os.Open(path)
-	require.NoError(t, err)
+	mustNoErr(err)
 	defer file.Close()
 	AssertMD5Sums(t, file, map[string]string{
 		".":                  "",
@@ -43,7 +42,7 @@ func TestExtractTARGZ(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	wBytes, err := archive.ExtractTARGZ(tmpDir, RootTARGZ)
-	require.NoError(t, err)
+	mustNoErr(err)
 	assert.Equal(t, RootSize, wBytes)
 
 	assertMap := map[string]string{
@@ -80,7 +79,7 @@ func TestExtractTARGZ(t *testing.T) {
 		assert.Equal(t, expectedMd5, md5Hash)
 		return nil
 	})
-	require.NoError(t, err)
+	mustNoErr(err)
 }
 
 func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
@@ -93,15 +92,15 @@ func TestExtractTAGHeaderPathEscalationIsForbidden(t *testing.T) {
 	gw := gzip.NewWriter(buff)
 	tw := tar.NewWriter(gw)
 	fileHeaderName := "../scalated-to-root"
-	require.NoError(t, tw.WriteHeader(&tar.Header{
+	mustNoErr(tw.WriteHeader(&tar.Header{
 		Typeflag: tar.TypeReg,
 		Name:     fileHeaderName,
 		Size:     70,
 	}))
 	_, err := tw.Write([]byte("Hello, im the content of a file that will be placed in the wrong place"))
-	require.NoError(t, err)
-	require.NoError(t, tw.Close())
-	require.NoError(t, gw.Close())
+	mustNoErr(err)
+	mustNoErr(tw.Close())
+	mustNoErr(gw.Close())
 
 	_, err = archive.ExtractTARGZStream(buff, targetDir)
 	expected := fmt.Sprintf("path in root check: the path you provided %s is not a suitable one",
