@@ -92,11 +92,11 @@ func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {
 }
 
 func tarFromFile(path string, tarStream *tar.Writer) (int64, error) {
-	fileInfo, err := os.Stat(path)
+	info, err := os.Stat(path)
 	if err != nil {
 		return 0, err
 	}
-	header, err := tar.FileInfoHeader(fileInfo, "")
+	header, err := tar.FileInfoHeader(info, "")
 	if err != nil {
 		return 0, err
 	}
@@ -126,8 +126,8 @@ func appendToWriter(w io.Writer, path string) (int64, error) {
 
 // ExtractTARGZ will extract the provided tar.gz file
 // into the provided path.
-func ExtractTARGZ(dst, tarFile string) (int64, error) {
-	f, err := os.Open(tarFile)
+func ExtractTARGZ(dst, path string) (int64, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return 0, err
 	}
