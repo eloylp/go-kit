@@ -22,11 +22,18 @@ const (
 	RootTARGZ           = "tests/root.tar.gz"
 )
 
-func AssertTARGZMD5Sums(t *testing.T, r io.Reader, expectedElems map[string]string) {
+// AssertMD5Sums accepts a reader, which streams the tar.gz
+// content and an expected map of file names/md5Sum.
+//
+// This helper will read the entire tar.gz reader and assert all
+// the expected content its present, by checking the md5 sums
+// of each file. In case a folder is found, an empty string ""
+// will be in the place of the sum.
+func AssertMD5Sums(t *testing.T, r io.Reader, expected map[string]string) {
 	gzipReader, err := gzip.NewReader(r)
 	require.NoError(t, err)
 	tarReader := tar.NewReader(gzipReader)
-	elems := map[string]string{}
+	contents := map[string]string{}
 	for {
 		h, err := tarReader.Next()
 		if err == io.EOF {
@@ -41,10 +48,10 @@ func AssertTARGZMD5Sums(t *testing.T, r io.Reader, expectedElems map[string]stri
 			if err != nil {
 				t.Fatal(err)
 			}
-			elems[h.Name] = fmt.Sprintf("%x", sum.Sum(nil))
+			contents[h.Name] = fmt.Sprintf("%x", sum.Sum(nil))
 			continue
 		}
-		elems[h.Name] = ""
+		contents[h.Name] = ""
 	}
-	assert.Equal(t, expectedElems, elems)
+	assert.Equal(t, expected, contents)
 }

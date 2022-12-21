@@ -29,7 +29,7 @@ func TestCreateTARGZ(t *testing.T) {
 	tarGzFile, err := os.Open(tarGzFilePath)
 	require.NoError(t, err)
 	defer tarGzFile.Close()
-	AssertTARGZMD5Sums(t, tarGzFile, map[string]string{
+	AssertMD5Sums(t, tarGzFile, map[string]string{
 		".":                  "",
 		"gnu.png":            GnuTestFileMD5,
 		"tux.png":            TuxTestFileMD5,
