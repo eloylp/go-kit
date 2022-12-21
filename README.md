@@ -36,6 +36,7 @@ go get go.eloylp.dev/kit
 ## Table of contents
 
 1. [Archive tools](#archive-tools)
+2. [Parallelization helpers](#parallelization-helpers)
 
 
 ### Archive tools
@@ -83,6 +84,53 @@ func main() {
 ```
 
 Finally, if you need a **stream based** interface, take a look to the `Stream` functions in the same package.
+
+### Parallelization helpers
+
+Some times its needed to parallelize a task during a certain time and gracefully wait until all the tasks are done.
+
+Imagine that we have a service called `MultiAPIService`, which has 2 APIs. An `HTTP` one and a `TCP` one. We want to do a stress test on this service with the [Go race detector](https://go.dev/blog/race-detector) enabled, in order to catch some nasty data races. Lets see a code example on how we can stress such APIs:
+
+```go
+package main_test
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"go.eloylp.dev/kit/exec"
+)
+
+func TestMain(t *testing.T) {
+
+	// Service initialization logic ...
+
+	const MAX_CONCURRENT = 10 // Max concurrent jobs per API.
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Test time.
+	defer cancel()
+
+	wg := &sync.WaitGroup{}
+
+	// Launch all the parallelization for both APIs with exec.Parallelize
+	go exec.Parallelize(ctx, wg, MAX_CONCURRENT, doHTTPRequest)
+	exec.Parallelize(ctx, wg, MAX_CONCURRENT, doTCPRequest)
+
+	wg.Wait() // Waiting for all tasks to end.
+
+	// Service shutdown logic ...
+}
+
+func doHTTPRequest() {
+	time.Sleep(100 * time.Millisecond)
+}
+
+func doTCPRequest() {
+	time.Sleep(50 * time.Millisecond)
+}
+```
 
 ### Contributing
 
