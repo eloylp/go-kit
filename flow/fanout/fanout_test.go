@@ -1,4 +1,4 @@
-// +build unit
+//go:build unit
 
 package fanout_test
 
@@ -12,23 +12,26 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/kit/flow/fanout"
-	"go.eloylp.dev/kit/flow/fanout/fanouttest"
 )
 
 func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 	elems := 3
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
+
 	ch, _, _ := fo.Subscribe()
-	fanouttest.Populate(fo, elems)
+
+	fo.Add([]byte(strconv.Itoa(1)))
+	fo.Add([]byte(strconv.Itoa(2)))
+	fo.Add([]byte(strconv.Itoa(3)))
+
 	var chOk bool
 	var slot *fanout.Slot
+
 	for i := 0; i < elems; i++ {
 		slot, chOk = <-ch
-		item, ok := slot.Elem.([]byte)
-		assert.True(t, ok, "wanted []byte type got %T", item)
 		want := "d" + fmt.Sprint(i)
-		got := string(item)
+		got := string(slot.Elem)
 		assert.Equal(t, want, got, "error listening subscribed elements, wanted was %q but got %q", want, got)
 	}
 	assert.True(t, chOk, "channel remains open for future consumes")
@@ -37,9 +40,14 @@ func TestBufferedFanOut_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 	elems := 3
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
 	ch, uuid, _ := fo.Subscribe()
-	fanouttest.Populate(fo, elems)
+
+	fo.Add([]byte(strconv.Itoa(1)))
+	fo.Add([]byte(strconv.Itoa(2)))
+	fo.Add([]byte(strconv.Itoa(3)))
+
 	assert.NotEmpty(t, uuid, "want a uuid not an empty string")
 	assert.NotNil(t, ch, "want a channel")
 	_, ok := <-ch
@@ -48,12 +56,15 @@ func TestBufferedFanOut_Subscribe_ReturnValues(t *testing.T) {
 
 func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
 	// Adds one extra subscriber for test hardening.
 	_, _, _ = fo.Subscribe() //nolint:dogsled
 	ch, uuid, _ := fo.Subscribe()
-	elems := 3
-	fanouttest.Populate(fo, elems)
+
+	fo.Add([]byte(strconv.Itoa(1)))
+	fo.Add([]byte(strconv.Itoa(2)))
+	fo.Add([]byte(strconv.Itoa(3)))
+
 	err := fo.Unsubscribe(uuid)
 	require.NoError(t, err)
 	assert.Equal(t, 1, fo.SubscribersLen())
@@ -71,12 +82,15 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 
 func TestBufferedFanOut_Unsubscribe_WithCancelFunc(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
 	// Adds one extra subscriber for test hardening.
 	_, _, _ = fo.Subscribe() //nolint:dogsled
 	ch, _, cancel := fo.Subscribe()
-	elems := 3
-	fanouttest.Populate(fo, elems)
+
+	fo.Add([]byte(strconv.Itoa(1)))
+	fo.Add([]byte(strconv.Itoa(2)))
+	fo.Add([]byte(strconv.Itoa(3)))
+
 	err := cancel()
 	require.NoError(t, err)
 	assert.Equal(t, 1, fo.SubscribersLen())
@@ -93,7 +107,7 @@ func TestBufferedFanOut_Unsubscribe_WithCancelFunc(t *testing.T) {
 }
 
 func TestBufferedFanOut_Unsubscribe_NotFound(t *testing.T) {
-	fo := fanouttest.BufferedFanOut(10, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
 	_, _, cancel := fo.Subscribe()
 	fo.Reset()
 	err := cancel()
@@ -102,7 +116,8 @@ func TestBufferedFanOut_Unsubscribe_NotFound(t *testing.T) {
 
 func TestBufferedFanOut_Reset(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
+
 	ch, _, _ := fo.Subscribe()
 	fo.Add([]byte("dd"))
 	fo.Reset()
@@ -115,10 +130,13 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 
 func TestBufferedFanOut_Add_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
 	ch, _, _ := fo.Subscribe() // this subscriber will try to block the entire system
-	elems := 3                 // "d + index" elems (continue reading comments ...)
-	fanouttest.Populate(fo, elems)
+
+	fo.Add([]byte(strconv.Itoa(1)))
+	fo.Add([]byte(strconv.Itoa(2)))
+	fo.Add([]byte(strconv.Itoa(3)))
+
 	limitValueForBlocking := maxBuffLen // So we will overwrite entire channel with new data "dn" (limit value of maxBuffLen)
 	testEnd := make(chan struct{}, 1)
 	go func() {
@@ -139,16 +157,15 @@ func TestBufferedFanOut_Add_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	// Now check that all discarded elements in subscriber buffer are old, from the factory.
 	// This will be done by checking all data in subscriber channels contains "dn + index".
 	for s := range ch {
-		content, ok := s.Elem.([]byte)
-		assert.True(t, ok, "wanted type []byte got %T", content)
-		assert.Contains(t, string(content), "dn",
+		assert.Contains(t, string(s.Elem), "dn",
 			"The are elements in subs channel that needs to be discarded")
 	}
 }
 
 func TestBufferedFanOut_Status_Count(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
+
 	_, uid1, _ := fo.Subscribe()
 	ch2, uid2, _ := fo.Subscribe()
 	fo.Add([]int{1, 1})
@@ -163,7 +180,8 @@ func TestBufferedFanOut_Status_Count(t *testing.T) {
 
 func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
 	maxBuffLen := 10
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+	fo := fanout.NewBufferedFanOut(maxBuffLen, time.Now)
+
 	_, _, cancel := fo.Subscribe()
 	_, uid2, _ := fo.Subscribe()
 	fo.Add([]int{1, 1})

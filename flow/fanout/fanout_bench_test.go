@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"go.eloylp.dev/kit/flow/fanout/fanouttest"
+	"go.eloylp.dev/kit/flow/fanout"
 )
 
 func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ReportAllocs()
-	fo := fanouttest.BufferedFanOut(maxBuffLen, time.Now)
+
+	fo := fanout.NewBufferedFanOut[[]byte](maxBuffLen, time.Now)
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}

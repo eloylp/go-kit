@@ -1,3 +1,4 @@
+//go:build racy
 // +build racy
 
 package fanout_test
@@ -8,11 +9,10 @@ import (
 	"time"
 
 	"go.eloylp.dev/kit/flow/fanout"
-	"go.eloylp.dev/kit/flow/fanout/fanouttest"
 )
 
 func TestBufferedFanOut_SupportsRace(t *testing.T) {
-	fo := fanouttest.BufferedFanOut(5, time.Now)
+	fo := fanout.NewBufferedFanOut[[]byte](5, time.Now)
 	cancels := make(chan fanout.CancelFunc, 10)
 	var wg sync.WaitGroup
 	t.Log("starting racy test ...")
