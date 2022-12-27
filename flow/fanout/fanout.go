@@ -92,7 +92,8 @@ func (fo *BufferedFanOut[T]) SubscribersLen() int {
 }
 
 func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
-	for _, s := range fo.subscribers {
+	for i := 0; i < len(fo.subscribers); i++ {
+		s := fo.subscribers[i]
 		if len(s.ch) == fo.maxBuffLen {
 			<-s.ch // remove last Slot of subscriber channel
 		}
