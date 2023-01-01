@@ -1,6 +1,3 @@
-//go:build racy
-// +build racy
-
 package fanout_test
 
 import (
@@ -26,7 +23,7 @@ func TestBufferedFanOut_SupportsRace(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		for i := 0; i < 8000; i++ {
-			subs, _, cancel := fo.Subscribe()
+			subs, cancel := fo.Subscribe()
 			cancels <- cancel
 			go func() {
 				for {
