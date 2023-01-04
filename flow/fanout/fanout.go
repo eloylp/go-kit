@@ -84,9 +84,9 @@ func (fo *BufferedFanOut[T]) Add(elem T) {
 	fo.publish(sl)
 }
 
-// SubscribersLen can tell us how many subscribers
-// are registered in the present moment.
-func (fo *BufferedFanOut[T]) SubscribersLen() int {
+// ActiveSubscribers can tell us how many subscribers
+// are registered and active in the present moment.
+func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
 	fo.L.RLock()
 	defer fo.L.RUnlock()
 	var count int

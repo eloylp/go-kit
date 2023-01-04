@@ -61,7 +61,7 @@ func TestBufferedFanOut_SupportsRace(t *testing.T) {
 	// Add subs len vector
 	go func() {
 		for {
-			fo.SubscribersLen()
+			fo.ActiveSubscribers()
 		}
 	}()
 	wg.Wait()

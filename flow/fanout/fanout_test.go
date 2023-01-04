@@ -58,7 +58,7 @@ func TestBufferedFanOut_Unsubscribe(t *testing.T) {
 
 	err := unsubscribe()
 	require.NoError(t, err)
-	assert.Equal(t, 1, fo.SubscribersLen())
+	assert.Equal(t, 1, fo.ActiveSubscribers())
 	// exhaust channel
 	var count int
 	for range ch {
@@ -85,7 +85,7 @@ func TestBufferedFanOut_Reset(t *testing.T) {
 	ch, _ := fo.Subscribe()
 	fo.Add("dd")
 	fo.Reset()
-	assert.Equal(t, 0, fo.SubscribersLen(), "no subscribers expected after reset")
+	assert.Equal(t, 0, fo.ActiveSubscribers(), "no subscribers expected after reset")
 	// Check channel is closed after consumption
 	<-ch
 	_, ok := <-ch
