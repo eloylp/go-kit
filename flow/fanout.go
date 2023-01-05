@@ -19,8 +19,11 @@ type Slot[T any] struct {
 // It should be called by users in order
 // to retrieve elements from the queue.
 //
-// In case there are no more elements or the subscription
-// is cancelled, an io.EOF error will be returned.
+// In case there are no more elements the function
+// will block.
+//
+// In case the subscription is cancelled, an io.EOF
+// error will be returned.
 type ConsumerFunc[T any] func() (*Slot[T], error)
 
 // CancelFunc is the way that a consumer can terminate
