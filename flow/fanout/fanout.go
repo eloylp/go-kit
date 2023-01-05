@@ -98,6 +98,15 @@ func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
 	return count
 }
 
+// SubscribersLen can tell us the size of the underlying
+// subscriber storage. This will return both, active and
+// non active slots.
+func (fo *BufferedFanOut[T]) SubscribersLen() int {
+	fo.L.RLock()
+	defer fo.L.RUnlock()
+	return len(fo.subscribers)
+}
+
 func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] == nil {
@@ -125,10 +134,25 @@ func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (<-chan *Slot[T], Cancel
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	ch := make(chan *Slot[T], fo.maxBuffLen)
-	fo.subscribers = append(fo.subscribers, &subscriber[T]{ch, uuid})
-	subscriberIndex := len(fo.subscribers) - 1
+
+	subscriber := &subscriber[T]{ch, uuid}
+
+	// Prefer reusing a free slot caused by a previous unsubscribe operation.
+	// Try to not increase underlying array too much. This is O(n) worst case.
+	for i := 0; i < len(fo.subscribers); i++ {
+		if fo.subscribers[i] == nil {
+			fo.subscribers[i] = subscriber
+			return ch, func() error {
+				return fo.unsubscribe(i)
+			}
+		}
+	}
+
+	// Looks like we are full of subscribers. Time to append more ...
+	fo.subscribers = append(fo.subscribers, subscriber)
+	index := len(fo.subscribers) - 1
 	return ch, func() error {
-		return fo.unsubscribe(subscriberIndex)
+		return fo.unsubscribe(index)
 	}
 }
 

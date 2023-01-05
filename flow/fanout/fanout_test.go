@@ -169,3 +169,30 @@ func TestBufferedFanOut_Status_Unsubscribe(t *testing.T) {
 	}
 	assert.Equal(t, want, fo.Status())
 }
+
+func TestSubscribersStoreReuse(t *testing.T) {
+	fo := fanout.NewBufferedFanOut[int](10, time.Now)
+
+	fo.Subscribe() // 1
+	fo.Subscribe() // 2
+
+	// Cancelling the 3th subscription.
+	_, cancel := fo.Subscribe() // 3
+	cancel()
+
+	fo.Subscribe() // 4 This subscriber should be allocated in same place of previous canceled subscription (3).
+
+	assert.Equal(t, 3, fo.SubscribersLen(), "It should not reserve more subscriber slots, if we already have empty ones.")
+
+}
+
+func TestSubscribersStoreGrows(t *testing.T) {
+	fo := fanout.NewBufferedFanOut[int](10, time.Now)
+
+	fo.Subscribe()
+	fo.Subscribe()
+	fo.Subscribe()
+
+	assert.Equal(t, 3, fo.SubscribersLen(), "Subscriber len should grow linearly")
+
+}
