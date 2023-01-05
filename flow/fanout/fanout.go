@@ -1,6 +1,7 @@
 package fanout
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -22,6 +23,8 @@ type Status map[string]int
 // will be closed, so consumer will still try to
 // consume all the remaining messages.
 type CancelFunc func() error
+
+type ConsumerFunc[T any] func() (*Slot[T], error)
 
 // subscriber is an internal representation of a
 // consumer. It holds channel of Slots, that represents
@@ -126,14 +129,22 @@ func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
 // If you are not actively consuming this channel, but
 // data continues arriving to the fanout, the oldest
 // element will be dropped in favor of the new one.
-func (fo *BufferedFanOut[T]) Subscribe() (<-chan *Slot[T], CancelFunc) { //nolint:gocritic
+func (fo *BufferedFanOut[T]) Subscribe() (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
 	return fo.SubscribeWith("")
 }
 
-func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (<-chan *Slot[T], CancelFunc) { //nolint:gocritic
+func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	ch := make(chan *Slot[T], fo.maxBuffLen)
+
+	consumerFn := func() (*Slot[T], error) {
+		slot, ok := <-ch
+		if !ok {
+			return slot, io.EOF
+		}
+		return slot, nil
+	}
 
 	subscriber := &subscriber[T]{ch, uuid}
 
@@ -142,7 +153,7 @@ func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (<-chan *Slot[T], Cancel
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] == nil {
 			fo.subscribers[i] = subscriber
-			return ch, func() error {
+			return consumerFn, func() error {
 				return fo.unsubscribe(i)
 			}
 		}
@@ -151,7 +162,7 @@ func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (<-chan *Slot[T], Cancel
 	// Looks like we are full of subscribers. Time to append more ...
 	fo.subscribers = append(fo.subscribers, subscriber)
 	index := len(fo.subscribers) - 1
-	return ch, func() error {
+	return consumerFn, func() error {
 		return fo.unsubscribe(index)
 	}
 }

@@ -23,12 +23,12 @@ func TestBufferedFanOut_SupportsRace(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		for i := 0; i < 8000; i++ {
-			subs, cancel := fo.Subscribe()
+			consume, cancel := fo.Subscribe()
 			cancels <- cancel
 			go func() {
 				for {
 					time.Sleep(time.Millisecond * 300)
-					<-subs
+					consume()
 				}
 			}()
 		}
