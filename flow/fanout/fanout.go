@@ -52,7 +52,7 @@ type Status map[string]int
 type BufferedFanOut[T any] struct {
 	subscribers []*subscriber[T]
 	maxBuffLen  int
-	L           sync.RWMutex
+	l           sync.RWMutex
 }
 
 type subscriber[T any] struct {
@@ -72,8 +72,8 @@ func NewBufferedFanOut[T any](maxBuffLen int) *BufferedFanOut[T] {
 // If one of the subscribers channels is full, oldest data
 // will be discarded.
 func (fo *BufferedFanOut[T]) Add(elem T) {
-	fo.L.Lock()
-	defer fo.L.Unlock()
+	fo.l.Lock()
+	defer fo.l.Unlock()
 	sl := &Slot[T]{
 		TimeStamp: time.Now(),
 		Elem:      elem,
@@ -96,8 +96,8 @@ func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
 // ActiveSubscribers will tell us how many subscribers
 // are registered and active in the present moment.
 func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
+	fo.l.RLock()
+	defer fo.l.RUnlock()
 	var count int
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] != nil {
@@ -111,8 +111,8 @@ func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
 // subscriber storage. This will return both, active and
 // non active (free) subscriber slots.
 func (fo *BufferedFanOut[T]) SubscribersLen() int {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
+	fo.l.RLock()
+	defer fo.l.RUnlock()
 	return len(fo.subscribers)
 }
 
@@ -137,8 +137,8 @@ func (fo *BufferedFanOut[T]) Subscribe() (ConsumerFunc[T], CancelFunc) { //nolin
 // unequivocally identify a subscriber or a group of them
 // in the system.
 func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
-	fo.L.Lock()
-	defer fo.L.Unlock()
+	fo.l.Lock()
+	defer fo.l.Unlock()
 	ch := make(chan *Slot[T], fo.maxBuffLen)
 
 	consumerFn := func() (*Slot[T], error) {
@@ -171,8 +171,8 @@ func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (ConsumerFunc[T], Cancel
 }
 
 func (fo *BufferedFanOut[T]) unsubscribe(index int) error {
-	fo.L.Lock()
-	defer fo.L.Unlock()
+	fo.l.Lock()
+	defer fo.l.Unlock()
 
 	if len(fo.subscribers) <= index {
 		return ErrSubscriberNotFound
@@ -193,8 +193,8 @@ func (fo *BufferedFanOut[T]) unsubscribe(index int) error {
 // After calling Reset(), Subscribers can still
 // consume all the remaining elements.
 func (fo *BufferedFanOut[T]) Reset() {
-	fo.L.Lock()
-	defer fo.L.Unlock()
+	fo.l.Lock()
+	defer fo.l.Unlock()
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] == nil {
 			continue
@@ -208,8 +208,8 @@ func (fo *BufferedFanOut[T]) Reset() {
 // the list of all subscribers and their
 // pending elements.
 func (fo *BufferedFanOut[T]) Status() Status {
-	fo.L.RLock()
-	defer fo.L.RUnlock()
+	fo.l.RLock()
+	defer fo.l.RUnlock()
 
 	status := make(Status, len(fo.subscribers))
 	for i := 0; i < len(fo.subscribers); i++ {
