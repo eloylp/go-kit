@@ -101,6 +101,7 @@ func (fo *Fanout[T]) publish(sl *Slot[T]) {
 func (fo *Fanout[T]) ActiveSubscribers() int {
 	fo.l.RLock()
 	defer fo.l.RUnlock()
+
 	var count int
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] != nil {
@@ -110,7 +111,7 @@ func (fo *Fanout[T]) ActiveSubscribers() int {
 	return count
 }
 
-// SubscribersLen can tell us the size of the underlying
+// SubscribersLen returns the size of the underlying
 // subscriber storage. This will return both, active and
 // non active (free) subscriber slots.
 func (fo *Fanout[T]) SubscribersLen() int {
