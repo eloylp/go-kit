@@ -8,21 +8,13 @@ import (
 	"go.eloylp.dev/kit/moment"
 )
 
-// Status represents a report about how much
-// elements are queued per consumer.
-//
-// As the Key, the provided subscriber UUID is used (See BufferedFanOut.SubscribeWith).
-// If not provided, an empty string will be used, aggregating
-// all counter values from all non customized consumers.
-//
-// As Value, the number of queued elements.
-type Status map[string]int
-
-// CancelFunc is the main way that a consumer can end its
-// subscription. When called, the subscriber channel
-// will be closed, so consumer will still try to
-// consume all the remaining messages.
-type CancelFunc func() error
+// Slot represents an enqueueable element. Timestamp
+// will allow consumers discard old messages. T will
+// represent the user custom data.
+type Slot[T any] struct {
+	TimeStamp time.Time
+	Elem      T
+}
 
 // ConsumerFunc represents the function type
 // returned by the Subscribe() operation.
@@ -33,21 +25,21 @@ type CancelFunc func() error
 // error will be returned.
 type ConsumerFunc[T any] func() (*Slot[T], error)
 
-// subscriber is an internal representation of a
-// consumer. It holds channel of Slots, that represents
-// consumer data.
-type subscriber[T any] struct {
-	ch   chan *Slot[T]
-	UUID string
-}
+// CancelFunc is the main way that a consumer can end its
+// subscription. When called, the subscriber channel
+// will be closed, so consumer will still try to
+// consume all the remaining messages.
+type CancelFunc func() error
 
-// Slot represents an enqueueable element. Timestamp
-// will allow consumers discard old messages. T will
-// represent the user custom data.
-type Slot[T any] struct {
-	TimeStamp time.Time
-	Elem      T
-}
+// Status represents a report about how much
+// elements are queued per consumer.
+//
+// As the Key, the provided subscriber UUID is used (See BufferedFanOut.SubscribeWith).
+// If not provided, an empty string will be used, aggregating
+// all counter values from all non customized consumers.
+//
+// As Value, the number of queued elements.
+type Status map[string]int
 
 // BufferedFanOut represent a fan-out pattern making
 // use of channels.
@@ -62,6 +54,11 @@ type BufferedFanOut[T any] struct {
 	maxBuffLen  int
 	L           sync.RWMutex
 	Now         moment.Now
+}
+
+type subscriber[T any] struct {
+	ch   chan *Slot[T]
+	UUID string
 }
 
 // NewBufferedFanOut needs buffer size for subscribers channels
@@ -94,6 +91,18 @@ func (fo *BufferedFanOut[T]) Add(elem T) {
 	fo.publish(sl)
 }
 
+func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
+	for i := 0; i < len(fo.subscribers); i++ {
+		if fo.subscribers[i] == nil {
+			continue
+		}
+		if len(fo.subscribers[i].ch) == fo.maxBuffLen {
+			<-fo.subscribers[i].ch // remove last Slot of subscriber channel
+		}
+		fo.subscribers[i].ch <- sl
+	}
+}
+
 // ActiveSubscribers can tell us how many subscribers
 // are registered and active in the present moment.
 func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
@@ -115,18 +124,6 @@ func (fo *BufferedFanOut[T]) SubscribersLen() int {
 	fo.L.RLock()
 	defer fo.L.RUnlock()
 	return len(fo.subscribers)
-}
-
-func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
-	for i := 0; i < len(fo.subscribers); i++ {
-		if fo.subscribers[i] == nil {
-			continue
-		}
-		if len(fo.subscribers[i].ch) == fo.maxBuffLen {
-			<-fo.subscribers[i].ch // remove last Slot of subscriber channel
-		}
-		fo.subscribers[i].ch <- sl
-	}
 }
 
 // Subscribe will return an output channel that will
