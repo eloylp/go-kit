@@ -4,8 +4,6 @@ import (
 	"io"
 	"sync"
 	"time"
-
-	"go.eloylp.dev/kit/moment"
 )
 
 // Slot represents an enqueueable element. Timestamp
@@ -53,7 +51,6 @@ type BufferedFanOut[T any] struct {
 	subscribers []*subscriber[T]
 	maxBuffLen  int
 	L           sync.RWMutex
-	Now         moment.Now
 }
 
 type subscriber[T any] struct {
@@ -64,10 +61,9 @@ type subscriber[T any] struct {
 // NewBufferedFanOut needs buffer size for subscribers channels
 // and function that must retrieve the current time for Slots
 // timestamps.
-func NewBufferedFanOut[T any](maxBuffLen int, now moment.Now) *BufferedFanOut[T] {
+func NewBufferedFanOut[T any](maxBuffLen int) *BufferedFanOut[T] {
 	fo := &BufferedFanOut[T]{
 		maxBuffLen: maxBuffLen,
-		Now:        now,
 	}
 	return fo
 }
@@ -85,7 +81,7 @@ func (fo *BufferedFanOut[T]) Add(elem T) {
 	fo.L.Lock()
 	defer fo.L.Unlock()
 	sl := &Slot[T]{
-		TimeStamp: fo.Now(),
+		TimeStamp: time.Now(),
 		Elem:      elem,
 	}
 	fo.publish(sl)

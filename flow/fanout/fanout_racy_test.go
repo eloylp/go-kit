@@ -9,7 +9,7 @@ import (
 )
 
 func TestBufferedFanOut_SupportsRace(t *testing.T) {
-	fo := fanout.NewBufferedFanOut[[]byte](5, time.Now)
+	fo := fanout.NewBufferedFanOut[[]byte](5)
 	cancels := make(chan fanout.CancelFunc, 10)
 	var wg sync.WaitGroup
 	t.Log("starting racy test ...")
