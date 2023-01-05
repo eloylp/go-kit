@@ -1,4 +1,4 @@
-package fanout
+package flow
 
 import (
 	"io"
@@ -39,7 +39,7 @@ type CancelFunc func() error
 // As the Value, the number of queued elements.
 type Status map[string]int
 
-// BufferedFanOut represents a fan-out in-memory pattern
+// Fanout represents a fan-out in-memory pattern
 // with a configurable buffer.
 //
 // It Will send a copy of the element to multiple
@@ -49,7 +49,7 @@ type Status map[string]int
 //
 // This implements all the needed locking mechanisms,
 // so it can be considered thread safe.
-type BufferedFanOut[T any] struct {
+type Fanout[T any] struct {
 	subscribers []*subscriber[T]
 	maxBuffLen  int
 	l           sync.RWMutex
@@ -61,8 +61,8 @@ type subscriber[T any] struct {
 }
 
 // NewBufferedFanOut is the constructor for BufferedFanOut.
-func NewBufferedFanOut[T any](maxBuffLen int) *BufferedFanOut[T] {
-	fo := &BufferedFanOut[T]{
+func NewBufferedFanOut[T any](maxBuffLen int) *Fanout[T] {
+	fo := &Fanout[T]{
 		maxBuffLen: maxBuffLen,
 	}
 	return fo
@@ -71,7 +71,7 @@ func NewBufferedFanOut[T any](maxBuffLen int) *BufferedFanOut[T] {
 // Add will send an elem to all subscribers channels.
 // If one of the subscribers channels is full, oldest data
 // will be discarded.
-func (fo *BufferedFanOut[T]) Add(elem T) {
+func (fo *Fanout[T]) Add(elem T) {
 	fo.l.Lock()
 	defer fo.l.Unlock()
 	sl := &Slot[T]{
@@ -81,7 +81,7 @@ func (fo *BufferedFanOut[T]) Add(elem T) {
 	fo.publish(sl)
 }
 
-func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
+func (fo *Fanout[T]) publish(sl *Slot[T]) {
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] == nil {
 			continue
@@ -95,7 +95,7 @@ func (fo *BufferedFanOut[T]) publish(sl *Slot[T]) {
 
 // ActiveSubscribers will tell us how many subscribers
 // are registered and active in the present moment.
-func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
+func (fo *Fanout[T]) ActiveSubscribers() int {
 	fo.l.RLock()
 	defer fo.l.RUnlock()
 	var count int
@@ -110,7 +110,7 @@ func (fo *BufferedFanOut[T]) ActiveSubscribers() int {
 // SubscribersLen can tell us the size of the underlying
 // subscriber storage. This will return both, active and
 // non active (free) subscriber slots.
-func (fo *BufferedFanOut[T]) SubscribersLen() int {
+func (fo *Fanout[T]) SubscribersLen() int {
 	fo.l.RLock()
 	defer fo.l.RUnlock()
 	return len(fo.subscribers)
@@ -128,7 +128,7 @@ func (fo *BufferedFanOut[T]) SubscribersLen() int {
 // the consumer activity. If not, resources could be leaked. A
 // good practice here would be to always call the CancelFunc
 // in a defer statement.
-func (fo *BufferedFanOut[T]) Subscribe() (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
+func (fo *Fanout[T]) Subscribe() (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
 	return fo.SubscribeWith("")
 }
 
@@ -136,7 +136,7 @@ func (fo *BufferedFanOut[T]) Subscribe() (ConsumerFunc[T], CancelFunc) { //nolin
 // customize the subscriber with an UUID. Which might
 // unequivocally identify a subscriber or a group of them
 // in the system.
-func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
+func (fo *Fanout[T]) SubscribeWith(uuid string) (ConsumerFunc[T], CancelFunc) { //nolint:gocritic
 	fo.l.Lock()
 	defer fo.l.Unlock()
 	ch := make(chan *Slot[T], fo.maxBuffLen)
@@ -170,7 +170,7 @@ func (fo *BufferedFanOut[T]) SubscribeWith(uuid string) (ConsumerFunc[T], Cancel
 	}
 }
 
-func (fo *BufferedFanOut[T]) unsubscribe(index int) error {
+func (fo *Fanout[T]) unsubscribe(index int) error {
 	fo.l.Lock()
 	defer fo.l.Unlock()
 
@@ -192,7 +192,7 @@ func (fo *BufferedFanOut[T]) unsubscribe(index int) error {
 //
 // After calling Reset(), Subscribers can still
 // consume all the remaining elements.
-func (fo *BufferedFanOut[T]) Reset() {
+func (fo *Fanout[T]) Reset() {
 	fo.l.Lock()
 	defer fo.l.Unlock()
 	for i := 0; i < len(fo.subscribers); i++ {
@@ -207,7 +207,7 @@ func (fo *BufferedFanOut[T]) Reset() {
 // Status will return a Status type with
 // the list of all subscribers and their
 // pending elements.
-func (fo *BufferedFanOut[T]) Status() Status {
+func (fo *Fanout[T]) Status() Status {
 	fo.l.RLock()
 	defer fo.l.RUnlock()
 

@@ -1,16 +1,16 @@
-package fanout_test
+package flow_test
 
 import (
 	"sync"
 	"testing"
 	"time"
 
-	"go.eloylp.dev/kit/flow/fanout"
+	"go.eloylp.dev/kit/flow"
 )
 
-func TestBufferedFanOut_SupportsRace(t *testing.T) {
-	fo := fanout.NewBufferedFanOut[[]byte](5)
-	cancels := make(chan fanout.CancelFunc, 10)
+func TestFanout_SupportsRace(t *testing.T) {
+	fo := flow.NewBufferedFanOut[[]byte](5)
+	cancels := make(chan flow.CancelFunc, 10)
 	var wg sync.WaitGroup
 	t.Log("starting racy test ...")
 	// Add status vector

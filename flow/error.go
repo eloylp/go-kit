@@ -1,4 +1,4 @@
-package fanout
+package flow
 
 import (
 	"errors"

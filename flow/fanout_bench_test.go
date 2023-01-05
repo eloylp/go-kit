@@ -1,15 +1,15 @@
-package fanout_test
+package flow_test
 
 import (
 	"testing"
 
-	"go.eloylp.dev/kit/flow/fanout"
+	"go.eloylp.dev/kit/flow"
 )
 
-func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
+func FanoutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ReportAllocs()
 
-	fo := fanout.NewBufferedFanOut[[]byte](maxBuffLen)
+	fo := flow.NewBufferedFanOut[[]byte](maxBuffLen)
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}
@@ -21,25 +21,25 @@ func BufferedFanOutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 }
 
 func BenchmarkBufferedFanOut_AddItem_10_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 10, 50, 10000)
+	FanoutAddElem(b, 10, 50, 10000)
 }
 
 func BenchmarkBufferedFanOut_AddItem_100_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 100, 50, 10000)
+	FanoutAddElem(b, 100, 50, 10000)
 }
 
 func BenchmarkBufferedFanOut_AddItem_1000_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 1000, 50, 10000)
+	FanoutAddElem(b, 1000, 50, 10000)
 }
 
 func BenchmarkBufferedFanOut_AddItem_10000_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 10000, 50, 10000)
+	FanoutAddElem(b, 10000, 50, 10000)
 }
 
 func BenchmarkBufferedFanOut_AddItem_100000_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 100000, 50, 10000)
+	FanoutAddElem(b, 100000, 50, 10000)
 }
 
 func BenchmarkBufferedFanOut_AddItem_1000000_50_10000(b *testing.B) {
-	BufferedFanOutAddElem(b, 1000000, 50, 10000)
+	FanoutAddElem(b, 1000000, 50, 10000)
 }
