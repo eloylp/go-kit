@@ -24,6 +24,13 @@ type Status map[string]int
 // consume all the remaining messages.
 type CancelFunc func() error
 
+// ConsumerFunc represents the function type
+// returned by the Subscribe() operation.
+// It should be called by users in order
+// to retrieve elements from the queue.
+//
+// In case there are no more elements, an io.EOF
+// error will be returned.
 type ConsumerFunc[T any] func() (*Slot[T], error)
 
 // subscriber is an internal representation of a
