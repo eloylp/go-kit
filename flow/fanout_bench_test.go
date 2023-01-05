@@ -9,7 +9,7 @@ import (
 func FanoutAddElem(b *testing.B, subscribers, maxBuffLen, msgLen int) {
 	b.ReportAllocs()
 
-	fo := flow.NewBufferedFanOut[[]byte](maxBuffLen)
+	fo := flow.NewFanout[[]byte](maxBuffLen)
 	for i := 0; i < subscribers; i++ {
 		fo.Subscribe()
 	}

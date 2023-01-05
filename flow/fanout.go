@@ -60,8 +60,8 @@ type subscriber[T any] struct {
 	uuid string
 }
 
-// NewBufferedFanOut is the constructor for BufferedFanOut.
-func NewBufferedFanOut[T any](maxBuffLen int) *Fanout[T] {
+// NewFanout is the constructor for BufferedFanOut.
+func NewFanout[T any](maxBuffLen int) *Fanout[T] {
 	fo := &Fanout[T]{
 		maxBuffLen: maxBuffLen,
 	}

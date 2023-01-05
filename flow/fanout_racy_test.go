@@ -9,7 +9,7 @@ import (
 )
 
 func TestFanout_SupportsRace(t *testing.T) {
-	fo := flow.NewBufferedFanOut[[]byte](5)
+	fo := flow.NewFanout[[]byte](5)
 	cancels := make(chan flow.CancelFunc, 10)
 	var wg sync.WaitGroup
 	t.Log("starting racy test ...")

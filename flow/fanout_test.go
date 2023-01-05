@@ -15,7 +15,7 @@ import (
 )
 
 func TestFanout_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
-	fo := flow.NewBufferedFanOut[string](10)
+	fo := flow.NewFanout[string](10)
 
 	consume, _ := fo.Subscribe()
 
@@ -35,7 +35,7 @@ func TestFanout_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 	assert.Nil(t, err, "channel remains open for future consumes")
 }
 func TestFanout_Unsubscribe(t *testing.T) {
-	fo := flow.NewBufferedFanOut[string](10)
+	fo := flow.NewFanout[string](10)
 	// Adds one extra subscriber for test hardening.
 	_, _ = fo.Subscribe() //nolint:dogsled
 	_, unsubscribe := fo.Subscribe()
@@ -47,7 +47,7 @@ func TestFanout_Unsubscribe(t *testing.T) {
 }
 
 func TestFanout_Unsubscribe_NotFound(t *testing.T) {
-	fo := flow.NewBufferedFanOut[string](10)
+	fo := flow.NewFanout[string](10)
 	_, cancel := fo.Subscribe()
 	fo.Reset()
 	err := cancel()
@@ -55,7 +55,7 @@ func TestFanout_Unsubscribe_NotFound(t *testing.T) {
 }
 
 func TestFanout_Reset(t *testing.T) {
-	fo := flow.NewBufferedFanOut[string](10)
+	fo := flow.NewFanout[string](10)
 
 	consume, _ := fo.Subscribe()
 
@@ -72,7 +72,7 @@ func TestFanout_Reset(t *testing.T) {
 
 func TestFanout_Add_NoActiveSubscriberDoesntBlock(t *testing.T) {
 	maxBuffLen := 10
-	fo := flow.NewBufferedFanOut[string](maxBuffLen)
+	fo := flow.NewFanout[string](maxBuffLen)
 	consume, _ := fo.Subscribe() // this subscriber will try to block the entire system
 
 	fo.Add("d1")
@@ -108,7 +108,7 @@ func TestFanout_Add_NoActiveSubscriberDoesntBlock(t *testing.T) {
 }
 
 func TestFanout_Status_Count_Aggregated(t *testing.T) {
-	fo := flow.NewBufferedFanOut[int](10)
+	fo := flow.NewFanout[int](10)
 
 	_, _ = fo.Subscribe()
 	_, _ = fo.Subscribe()
@@ -123,7 +123,7 @@ func TestFanout_Status_Count_Aggregated(t *testing.T) {
 }
 
 func TestFanout_Status_Count(t *testing.T) {
-	fo := flow.NewBufferedFanOut[int](10)
+	fo := flow.NewFanout[int](10)
 
 	_, _ = fo.SubscribeWith("a")
 	consume, _ := fo.SubscribeWith("b")
@@ -138,7 +138,7 @@ func TestFanout_Status_Count(t *testing.T) {
 }
 
 func TestFanout_Status_Unsubscribe(t *testing.T) {
-	fo := flow.NewBufferedFanOut[int](10)
+	fo := flow.NewFanout[int](10)
 
 	_, cancel := fo.SubscribeWith("a")
 	_, _ = fo.SubscribeWith("b")
@@ -153,7 +153,7 @@ func TestFanout_Status_Unsubscribe(t *testing.T) {
 }
 
 func TestSubscribersStoreReuse(t *testing.T) {
-	fo := flow.NewBufferedFanOut[int](10)
+	fo := flow.NewFanout[int](10)
 
 	fo.Subscribe() // 1
 	fo.Subscribe() // 2
@@ -169,7 +169,7 @@ func TestSubscribersStoreReuse(t *testing.T) {
 }
 
 func TestSubscribersStoreGrows(t *testing.T) {
-	fo := flow.NewBufferedFanOut[int](10)
+	fo := flow.NewFanout[int](10)
 
 	fo.Subscribe()
 	fo.Subscribe()
