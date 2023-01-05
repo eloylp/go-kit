@@ -57,7 +57,7 @@ type Fanout[T any] struct {
 
 type subscriber[T any] struct {
 	ch   chan *Slot[T]
-	UUID string
+	uuid string
 }
 
 // NewBufferedFanOut is the constructor for BufferedFanOut.
@@ -216,11 +216,11 @@ func (fo *Fanout[T]) Status() Status {
 		if fo.subscribers[i] == nil {
 			continue
 		}
-		if fo.subscribers[i].UUID == "" {
+		if fo.subscribers[i].uuid == "" {
 			status[""] += len(fo.subscribers[i].ch)
 			continue
 		}
-		status[fo.subscribers[i].UUID] = len(fo.subscribers[i].ch)
+		status[fo.subscribers[i].uuid] = len(fo.subscribers[i].ch)
 	}
 	return status
 }
