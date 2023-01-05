@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/kit/flow"
 )
@@ -32,7 +31,7 @@ func TestFanout_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 		got := slot.Elem
 		assert.Equal(t, want, got, "error listening subscribed elements, wanted was %q but got %q", want, got)
 	}
-	assert.Nil(t, err, "consumer remains open for future consumes")
+	assert.NoError(t, err, "consumer remains open for future consumes")
 }
 func TestFanout_Unsubscribe(t *testing.T) {
 	fo := flow.NewFanout[string](10)
@@ -40,8 +39,7 @@ func TestFanout_Unsubscribe(t *testing.T) {
 	_, _ = fo.Subscribe()
 	_, unsubscribe := fo.Subscribe()
 
-	err := unsubscribe()
-	require.NoError(t, err)
+	mustNoErr(unsubscribe())
 	assert.Equal(t, 1, fo.ActiveSubscribers())
 }
 
@@ -144,10 +142,12 @@ func TestFanout_Status_Unsubscribe(t *testing.T) {
 
 	_, cancel := fo.SubscribeWith("a")
 	_, _ = fo.SubscribeWith("b")
+
 	fo.Add(1)
 	fo.Add(2)
-	err := cancel()
-	require.NoError(t, err)
+
+	mustNoErr(cancel())
+
 	want := flow.Status{
 		"b": 2,
 	}
@@ -162,7 +162,7 @@ func TestFanout_SubscribersStoreReuse(t *testing.T) {
 
 	// Cancelling the 3th subscription.
 	_, cancel := fo.Subscribe() // 3
-	cancel()
+	mustNoErr(cancel())
 
 	fo.Subscribe() // 4 This subscriber should be allocated in same place of previous canceled subscription (3).
 
