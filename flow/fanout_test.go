@@ -20,9 +20,9 @@ func TestFanout_Subscribe_ElementsAreSentToSubscribers(t *testing.T) {
 
 	consume, _ := fo.Subscribe()
 
-	fo.Add("1")
-	fo.Add("2")
-	fo.Add("3")
+	fo.Publish("1")
+	fo.Publish("2")
+	fo.Publish("3")
 
 	var err error
 	var slot *flow.Slot[string]
@@ -58,7 +58,7 @@ func TestFanout_Reset(t *testing.T) {
 
 	consume, _ := fo.Subscribe()
 
-	fo.Add("dd")
+	fo.Publish("dd")
 
 	fo.Reset()
 
@@ -77,15 +77,15 @@ func TestFanout_Add_NoActiveSubscriberDoesNotBlock(t *testing.T) {
 	fo := flow.NewFanout[string](maxBuffLen)
 	consume, _ := fo.Subscribe() // this subscriber will try to block the entire system
 
-	fo.Add("d1")
-	fo.Add("d2")
-	fo.Add("d3")
+	fo.Publish("d1")
+	fo.Publish("d2")
+	fo.Publish("d3")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		for i := 0; i < maxBuffLen; i++ { // We will overwrite entire channel with new data "nd" (limit value of maxBuffLen)
 			// "nd + index" will mark new data segments that may override old ones in factory "d + index".
-			fo.Add("dn" + strconv.Itoa(i))
+			fo.Publish("dn" + strconv.Itoa(i))
 		}
 		cancel()
 	}()
@@ -114,8 +114,8 @@ func TestFanout_Status_Count(t *testing.T) {
 
 	_, _ = fo.SubscribeWith("a")
 	consume, _ := fo.SubscribeWith("b")
-	fo.Add(1)
-	fo.Add(2)
+	fo.Publish(1)
+	fo.Publish(2)
 	consume()
 	want := flow.Status{
 		"a": 2,
@@ -130,8 +130,8 @@ func TestFanout_Status_Count_Aggregated(t *testing.T) {
 	_, _ = fo.Subscribe()
 	_, _ = fo.Subscribe()
 
-	fo.Add(1)
-	fo.Add(2)
+	fo.Publish(1)
+	fo.Publish(2)
 
 	want := flow.Status{
 		"": 4,
@@ -145,8 +145,8 @@ func TestFanout_Status_Unsubscribe(t *testing.T) {
 	_, cancel := fo.SubscribeWith("a")
 	_, _ = fo.SubscribeWith("b")
 
-	fo.Add(1)
-	fo.Add(2)
+	fo.Publish(1)
+	fo.Publish(2)
 
 	mustNoErr(cancel())
 

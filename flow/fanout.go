@@ -71,10 +71,10 @@ func NewFanout[T any](maxBuffLen int) *Fanout[T] {
 	return fo
 }
 
-// Add will send an elem to all subscribers channels.
+// Publish will send an elem to all subscribers channels.
 // If one of the subscribers channels is full, oldest data
 // will be discarded.
-func (fo *Fanout[T]) Add(elem T) {
+func (fo *Fanout[T]) Publish(elem T) {
 	fo.l.Lock()
 	defer fo.l.Unlock()
 	sl := &Slot[T]{

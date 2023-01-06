@@ -73,7 +73,7 @@ func TestFanout_SupportsRace(t *testing.T) {
 			case <-ctx.Done():
 				return
 			default:
-				fo.Add(1)
+				fo.Publish(1)
 				time.Sleep(100 * time.Microsecond)
 			}
 		}
