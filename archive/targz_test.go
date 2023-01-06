@@ -1,3 +1,5 @@
+//go:build unit
+
 //nolint:gosec
 package archive_test
 

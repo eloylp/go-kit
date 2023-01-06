@@ -1,3 +1,5 @@
+//go:build racy
+
 package flow_test
 
 import (
