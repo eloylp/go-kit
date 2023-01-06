@@ -219,7 +219,7 @@ func (fo *Fanout[T]) Status() Status {
 	for i := 0; i < len(fo.subscribers); i++ {
 		if fo.subscribers[i] == nil {
 			continue
-		}		
+		}
 		status[fo.subscribers[i].uuid] += len(fo.subscribers[i].ch)
 	}
 	return status
