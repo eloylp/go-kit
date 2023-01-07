@@ -165,10 +165,10 @@ func TestMultipleMethodsAreSupported(t *testing.T) {
 
 	for _, m := range methods {
 		req := httptest.NewRequest(m, "/protected", nil)
-		req.SetBasicAuth("user", "password")
+		req.SetBasicAuth("user", "bad_password")
 		rec := httptest.NewRecorder()
 		mid(nullHandler).ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusOK, rec.Result().StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, rec.Result().StatusCode)
 	}
 }
 
