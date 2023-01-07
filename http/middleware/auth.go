@@ -35,8 +35,8 @@ func AuthChecker(cfgFunc AuthConfigFunc) Middleware {
 				return
 			}
 			for _, cfg := range cfgFunc() {
-				if isConfiguredMethod(r.Method, cfg.Method) {
-					for _, p := range cfg.Patterns {
+				if isConfiguredMethod(r.Method, cfg.Methods) {
+					for _, p := range cfg.Paths {
 						if !p.MatchString(r.URL.String()) {
 							continue
 						}
@@ -46,7 +46,7 @@ func AuthChecker(cfgFunc AuthConfigFunc) Middleware {
 							_, _ = w.Write([]byte("Unauthorized"))
 							return
 						}
-						passHash, ok := cfg.Authorizations[user]
+						passHash, ok := cfg.Auth[user]
 						if !ok {
 							w.WriteHeader(http.StatusUnauthorized)
 							_, _ = w.Write([]byte("Unauthorized"))
@@ -76,9 +76,9 @@ func isConfiguredMethod(requestMethod string, cfgMethods []string) bool {
 }
 
 type AuthConfig struct {
-	Method         []string
-	Patterns       []*regexp.Regexp
-	Authorizations Authorization
+	Methods []string
+	Paths   []*regexp.Regexp
+	Auth    Authorization
 }
 
 // NewAuthConfig returns a builder pattern that
@@ -91,7 +91,7 @@ func NewAuthConfig() *AuthConfig { //nolint:golint
 
 // WithMethods sets the HTTP methods where all the protected endpoints will reside.
 func (a *AuthConfig) WithMethods(m []string) *AuthConfig {
-	a.Method = m
+	a.Methods = m
 	return a
 }
 
@@ -99,14 +99,14 @@ func (a *AuthConfig) WithMethods(m []string) *AuthConfig {
 // The HTTP paths that matches this regexes will be protected. This method can be called
 // multiple times to add multiple regex.
 func (a *AuthConfig) WithPathRegex(p string) *AuthConfig {
-	a.Patterns = append(a.Patterns, regexp.MustCompile(p))
+	a.Paths = append(a.Paths, regexp.MustCompile(p))
 	return a
 }
 
 // WithAuth maps the user/password permissions. See Authorization struct type for more
 // information.
 func (a *AuthConfig) WithAuth(auth Authorization) *AuthConfig {
-	a.Authorizations = auth
+	a.Auth = auth
 	return a
 }
 

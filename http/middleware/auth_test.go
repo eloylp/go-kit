@@ -64,9 +64,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Authenticated user must access all routes for GET method.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -79,9 +79,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Authenticated user must access to a sub path.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -94,9 +94,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Non authenticated user must not access routes for GET method.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -109,9 +109,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Non authenticated user must NOT access to a protected sub path.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -124,9 +124,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Non authenticated user can access to a non protected sub path.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				TargetPath:   "/non-protected",
@@ -137,9 +137,9 @@ func authTestCases() []AuthTestCase {
 		{
 			Name: "Non authenticated user can not access to a protected sub path.",
 			SutConfig: middleware.AuthConfig{
-				Method:         []string{http.MethodGet},
-				Patterns:       []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
-				Authorizations: userAuth,
+				Methods: []string{http.MethodGet},
+				Paths:   []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
+				Auth:    userAuth,
 			},
 			TestInput: AuthTestInput{
 				TargetPath:   "/protected/resource/23",
