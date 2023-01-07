@@ -7,6 +7,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const ALL_METHODS = "*"
+
 // Authorization represent the user/encrypted-password table.
 // The keys are reserved for the user and the values for their respective
 // bcrypt encrypted passwords.
@@ -106,4 +108,20 @@ func (a *AuthConfig) WithPathRegex(p string) *AuthConfig {
 func (a *AuthConfig) WithAuth(auth Authorization) *AuthConfig {
 	a.Authorizations = auth
 	return a
+}
+
+// AllMethods is a helper that provides all available
+// HTTP methods.
+func AllMethods() []string {
+	return []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodHead,
+		http.MethodConnect,
+		http.MethodOptions,
+		http.MethodTrace,
+	}
 }
