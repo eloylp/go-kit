@@ -5,6 +5,7 @@ package middleware_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,16 +24,9 @@ var (
 // Groups all the info needed for execute a test case.
 type AuthTestCase struct {
 	Name             string
-	SutConfig        AuthSutConfig
+	SutConfig        middleware.AuthConfig
 	TestInput        AuthTestInput
 	ExpectedHTTPCode int
-}
-
-// AuthSutConfig configures the subject under tests (SUT)
-type AuthSutConfig struct {
-	Methods     []string
-	PathRegexes []string
-	Auth        middleware.Authorization
 }
 
 // AuthTestInput is the input to be submitted to the SUT.
@@ -50,13 +44,7 @@ func TestAuthChecker(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 
 			cfgFunc := middleware.AuthConfigFunc(func() []*middleware.AuthConfig {
-				cfg := middleware.NewAuthConfig().
-					WithMethods(c.SutConfig.Methods).
-					WithAuth(c.SutConfig.Auth)
-				for _, r := range c.SutConfig.PathRegexes {
-					cfg.WithPathRegex(r)
-				}
-				return []*middleware.AuthConfig{cfg}
+				return []*middleware.AuthConfig{&c.SutConfig}
 			})
 
 			req := httptest.NewRequest(c.TestInput.TargetMethod, c.TestInput.TargetPath, nil)
@@ -75,10 +63,10 @@ func authTestCases() []AuthTestCase {
 	return []AuthTestCase{
 		{
 			Name: "Authenticated user must access all routes for GET method.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -90,10 +78,10 @@ func authTestCases() []AuthTestCase {
 		},
 		{
 			Name: "Authenticated user must access to a sub path.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -105,10 +93,10 @@ func authTestCases() []AuthTestCase {
 		},
 		{
 			Name: "Non authenticated user must not access routes for GET method.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -120,10 +108,10 @@ func authTestCases() []AuthTestCase {
 		},
 		{
 			Name: "Non authenticated user must NOT access to a protected sub path.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				User:         "user",
@@ -135,10 +123,10 @@ func authTestCases() []AuthTestCase {
 		},
 		{
 			Name: "Non authenticated user can access to a non protected sub path.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^/protected.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				TargetPath:   "/non-protected",
@@ -148,10 +136,10 @@ func authTestCases() []AuthTestCase {
 		},
 		{
 			Name: "Non authenticated user can not access to a protected sub path.",
-			SutConfig: AuthSutConfig{
-				Methods:     []string{http.MethodGet},
-				PathRegexes: []string{"^/protected.*"},
-				Auth:        userAuth,
+			SutConfig: middleware.AuthConfig{
+				Method:         []string{http.MethodGet},
+				Patterns:       []*regexp.Regexp{regexp.MustCompile("^/protected.*")},
+				Authorizations: userAuth,
 			},
 			TestInput: AuthTestInput{
 				TargetPath:   "/protected/resource/23",
