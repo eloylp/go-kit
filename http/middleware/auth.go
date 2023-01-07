@@ -7,8 +7,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const ALL_METHODS = "*"
-
 // Authorization represent the user/encrypted-password table.
 // The keys are reserved for the user and the values for their respective
 // bcrypt encrypted passwords.
