@@ -23,7 +23,7 @@ func AuthChecker(cfg *AuthConfig) Middleware {
 				h.ServeHTTP(w, r)
 				return
 			}
-			if r.Method == cfg.Method {
+			if isConfiguredMethod(r.Method, cfg.Method) {
 				for _, p := range cfg.Patterns {
 					if !p.MatchString(r.URL.String()) {
 						continue
@@ -53,8 +53,17 @@ func AuthChecker(cfg *AuthConfig) Middleware {
 	}
 }
 
+func isConfiguredMethod(requestMethod string, cfgMethods []string) bool {
+	for _, m := range cfgMethods {
+		if m == requestMethod {
+			return true
+		}
+	}
+	return false
+}
+
 type AuthConfig struct {
-	Method         string
+	Method         []string
 	Patterns       []*regexp.Regexp
 	Authorizations Authorization
 }
@@ -67,8 +76,8 @@ func NewAuthConfig() *AuthConfig { //nolint:golint
 	return &AuthConfig{}
 }
 
-// WithMethod sets the HTTP method where all the protected endpoints will reside.
-func (a *AuthConfig) WithMethod(m string) *AuthConfig {
+// WithMethods sets the HTTP methods where all the protected endpoints will reside.
+func (a *AuthConfig) WithMethods(m []string) *AuthConfig {
 	a.Method = m
 	return a
 }
