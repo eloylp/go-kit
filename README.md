@@ -25,6 +25,8 @@ Software developers often work with similar patterns over and over again. This i
 patterns and tools. Go promotes the creation of small and cohesive tools. This repo is a space for that kind of small, reusable packages
 across projects.
 
+Its good to mention, that sometimes its preferable to copy some code than depending in third party libs. Feel free to just use this repo as an example.
+
 ## How to use this library
 
 In order to use any of the packages of this Go module, use the following import url:
@@ -37,7 +39,7 @@ go get go.eloylp.dev/kit
 
 1. [Archive tools](#archive-tools)
 2. [Parallelization helpers](#parallelization-helpers)
-
+3. [Data fanout](#data-fanout)
 
 ### Archive tools
 
@@ -131,6 +133,91 @@ func doTCPRequest() {
 	time.Sleep(50 * time.Millisecond)
 }
 ```
+
+### Data Fanout
+
+Current implementation of Go channels does not allow
+to broadcast same values to all consumers. This fanout solution comes to rescue:
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"sync"
+
+	"go.eloylp.dev/kit/flow"
+)
+
+func main() {
+
+	// A fanout of integers with buffer size 10.
+	fanout := flow.NewFanout[int](10)
+
+	var wg sync.WaitGroup
+
+	// Bring up consumer 1
+	wg.Add(1)
+	consume1, cancel1 := fanout.Subscribe()
+	go func() {
+		defer cancel1()
+		for {
+			elem, err := consume1()
+			if err == io.EOF {
+				break
+			}
+
+			fmt.Printf("consumer 1, received: %v\n", elem.Elem)
+		}
+		wg.Done()
+	}()
+
+	// Same way, bring up consumer 2
+	wg.Add(1)
+	consume2, cancel2 := fanout.Subscribe()
+
+	go func() {
+		defer cancel2()
+		for {
+			elem, err := consume2()
+			if err == io.EOF {
+				break
+			}
+
+			fmt.Printf("consumer 2, received: %v\n", elem.Elem)
+		}
+		wg.Done()
+	}()
+
+	// Push some elements to the fanout.
+	fanout.Publish(1)
+	fanout.Publish(2)
+	fanout.Publish(3)
+
+	// Shutdown consumers
+	cancel1()
+	cancel2()
+
+	// Wait for everything
+	wg.Wait()
+}
+```
+
+Result:
+
+```bash
+consumer 2, received: 1
+consumer 2, received: 2
+consumer 2, received: 3
+consumer 1, received: 1
+consumer 1, received: 2
+consumer 1, received: 3
+```
+
+If the buffer size of an specific consumer its exceeded, the oldest element will be discarded. This can cause slow consumers to loose data. This could be configurable in the future, though.
+
+See internal code documentation for complete API and other details.
 
 ### Contributing
 
