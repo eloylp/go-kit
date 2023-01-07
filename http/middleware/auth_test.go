@@ -49,14 +49,14 @@ func TestAuthChecker(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 
-			cfgFunc := middleware.AuthConfigFunc(func() *middleware.AuthConfig {
+			cfgFunc := middleware.AuthConfigFunc(func() []*middleware.AuthConfig {
 				cfg := middleware.NewAuthConfig().
 					WithMethods(c.SutConfig.Methods).
 					WithAuth(c.SutConfig.Auth)
 				for _, r := range c.SutConfig.PathRegexes {
 					cfg.WithPathRegex(r)
 				}
-				return cfg
+				return []*middleware.AuthConfig{cfg}
 			})
 
 			req := httptest.NewRequest(c.TestInput.TargetMethod, c.TestInput.TargetPath, nil)
@@ -165,11 +165,12 @@ func authTestCases() []AuthTestCase {
 func TestMultipleMethodsAreSupported(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPost}
 
-	cfgFunc := middleware.AuthConfigFunc(func() *middleware.AuthConfig {
-		return middleware.NewAuthConfig().
+	cfgFunc := middleware.AuthConfigFunc(func() []*middleware.AuthConfig {
+		return []*middleware.AuthConfig{middleware.NewAuthConfig().
 			WithMethods(methods).
 			WithAuth(userAuth).
-			WithPathRegex("^/protected.*")
+			WithPathRegex("^/protected.*"),
+		}
 	})
 
 	mid := middleware.AuthChecker(cfgFunc)

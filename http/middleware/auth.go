@@ -13,13 +13,13 @@ import (
 type Authorization map[string]string
 
 // AuthConfigFunc is the only one input parameter of the
-// AuthChecker middleware. It must return an AuthConfig,
+// AuthChecker middleware. It must return an []*AuthConfig,
 // That can come from any source, like a database.
 //
 // If the source is going to be a database, its encouraged,
 // to some kind of caching, as this is going to be executed
 // for EVERY request.
-type AuthConfigFunc func() *AuthConfig
+type AuthConfigFunc func() []*AuthConfig
 
 // AuthChecker is a middleware to prevent/allow access to
 // a specific combination of HTTP method/path. Read AuthConfig
@@ -32,29 +32,30 @@ func AuthChecker(cfgFunc AuthConfigFunc) Middleware {
 				h.ServeHTTP(w, r)
 				return
 			}
-			cfg := cfgFunc()
-			if isConfiguredMethod(r.Method, cfg.Method) {
-				for _, p := range cfg.Patterns {
-					if !p.MatchString(r.URL.String()) {
-						continue
-					}
-					user, pass, ok := r.BasicAuth()
-					if !ok {
-						w.WriteHeader(http.StatusUnauthorized)
-						_, _ = w.Write([]byte("Unauthorized"))
-						return
-					}
-					passHash, ok := cfg.Authorizations[user]
-					if !ok {
-						w.WriteHeader(http.StatusUnauthorized)
-						_, _ = w.Write([]byte("Unauthorized"))
-						return
-					}
-					err := bcrypt.CompareHashAndPassword([]byte(passHash), []byte(pass))
-					if err != nil {
-						w.WriteHeader(http.StatusUnauthorized)
-						_, _ = w.Write([]byte("Unauthorized"))
-						return
+			for _, cfg := range cfgFunc() {
+				if isConfiguredMethod(r.Method, cfg.Method) {
+					for _, p := range cfg.Patterns {
+						if !p.MatchString(r.URL.String()) {
+							continue
+						}
+						user, pass, ok := r.BasicAuth()
+						if !ok {
+							w.WriteHeader(http.StatusUnauthorized)
+							_, _ = w.Write([]byte("Unauthorized"))
+							return
+						}
+						passHash, ok := cfg.Authorizations[user]
+						if !ok {
+							w.WriteHeader(http.StatusUnauthorized)
+							_, _ = w.Write([]byte("Unauthorized"))
+							return
+						}
+						err := bcrypt.CompareHashAndPassword([]byte(passHash), []byte(pass))
+						if err != nil {
+							w.WriteHeader(http.StatusUnauthorized)
+							_, _ = w.Write([]byte("Unauthorized"))
+							return
+						}
 					}
 				}
 			}
