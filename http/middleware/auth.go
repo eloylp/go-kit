@@ -12,17 +12,27 @@ import (
 // bcrypt encrypted passwords.
 type Authorization map[string]string
 
+// AuthConfigFunc is the only one input parameter of the
+// AuthChecker middleware. It must return an AuthConfig,
+// That can come from any source, like a database.
+//
+// If the source is going to be a database, its encouraged,
+// to some kind of caching, as this is going to be executed
+// for EVERY request.
+type AuthConfigFunc func() *AuthConfig
+
 // AuthChecker is a middleware to prevent/allow access to
 // a specific combination of HTTP method/path. Read AuthConfig
 // for more information about how to configure this middleware.
 // This middleware should be the executed just before your business logic.
-func AuthChecker(cfg *AuthConfig) Middleware {
+func AuthChecker(cfgFunc AuthConfigFunc) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if cfg == nil {
+			if cfgFunc == nil {
 				h.ServeHTTP(w, r)
 				return
 			}
+			cfg := cfgFunc()
 			if isConfiguredMethod(r.Method, cfg.Method) {
 				for _, p := range cfg.Patterns {
 					if !p.MatchString(r.URL.String()) {
