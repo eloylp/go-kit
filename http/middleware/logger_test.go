@@ -16,18 +16,24 @@ import (
 
 func TestRequestLogger(t *testing.T) {
 	logOut := bytes.NewBuffer(nil)
+
 	logger := logrus.New()
 	logger.SetOutput(logOut)
 	logger.SetLevel(logrus.DebugLevel)
 
-	rec := httptest.NewRecorder()
+	entry := logrus.NewEntry(logger)
+
 	req := httptest.NewRequest(http.MethodGet, "/path", nil)
 	req.RemoteAddr = "192.168.1.15"
 	req.Header.Add("Accept", "application/json")
-	mid := middleware.RequestLogger(logger)
+
+	mid := middleware.RequestLogger(entry, logrus.DebugLevel)
+
+	rec := httptest.NewRecorder()
 	mid(nullHandler).ServeHTTP(rec, req)
 
 	logs := logOut.String()
+
 	assert.Contains(t, logs, "method=GET")
 	assert.Contains(t, logs, "path=/path")
 	assert.Contains(t, logs, "ip=192.168.1.15")

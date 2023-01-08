@@ -10,7 +10,7 @@ import (
 // RequestLogger will log the client request
 // information on each request at Debug level.
 // Accepts logrus as logger.
-func RequestLogger(logger *logrus.Logger) Middleware {
+func RequestLogger(logger *logrus.Entry, level logrus.Level) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -22,7 +22,7 @@ func RequestLogger(logger *logrus.Logger) Middleware {
 				"ip":       r.RemoteAddr,
 				"headers":  r.Header,
 				"duration": duration,
-			}).Debug("intercepted request")
+			}).Log(level, "intercepted request")
 		})
 	}
 }
