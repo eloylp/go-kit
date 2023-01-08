@@ -30,7 +30,9 @@ func TestRequestLogger(t *testing.T) {
 	mid := middleware.RequestLogger(entry, logrus.DebugLevel)
 
 	rec := httptest.NewRecorder()
-	mid(nullHandler).ServeHTTP(rec, req)
+	mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello !"))
+	})).ServeHTTP(rec, req)
 
 	logs := logOut.String()
 
@@ -39,6 +41,7 @@ func TestRequestLogger(t *testing.T) {
 	assert.Contains(t, logs, "ip=192.168.1.15")
 	assert.Contains(t, logs, "headers=\"map[Accept:[application/json]]")
 	assert.Contains(t, logs, "duration")
+	assert.Contains(t, logs, "response_size=7")
 	assert.Contains(t, logs, "msg=\"intercepted request\"")
 	assert.Contains(t, logs, "level=debug")
 }
