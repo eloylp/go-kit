@@ -49,6 +49,7 @@ go get go.eloylp.dev/kit
 		- [HTTP Middlewares](#http-middlewares)
 			- [Auth](#auth)
 			- [Logger](#logger)
+			- [Metrics](#metrics)
 
 ### Archive tools
 
@@ -337,3 +338,114 @@ Heres the output in a terminal:
 ```bash
 INFO[0001] intercepted request                           duration="15.645µs" headers="map[Accept:[text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8] Accept-Encoding:[gzip, deflate, br] Accept-Language:[en-GB,en] Cache-Control:[max-age=0] Connection:[keep-alive] Cookie:[redirect_to=%2F; Goland-976d74e5=8331d2d1-9f8e-48d8-a86a-6586446a99e0; Goland-976d74e6=81adf854-3ffb-4839-aa60-e7dbb375c58c] Sec-Ch-Ua:[\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\", \"Brave\";v=\"108\"] Sec-Ch-Ua-Mobile:[?0] Sec-Ch-Ua-Platform:[\"Linux\"] Sec-Fetch-Dest:[document] Sec-Fetch-Mode:[navigate] Sec-Fetch-Site:[none] Sec-Fetch-User:[?1] Sec-Gpc:[1] Upgrade-Insecure-Requests:[1] User-Agent:[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36]]" ip="[::1]:51110" method=GET path=/ response_size=7
 ```
+
+#### Metrics
+
+The metrics middlewares allows instrumenting an application really fast 
+with [Prometheus](https://prometheus.io) metrics !
+
+Lets see a working example:
+
+```go
+package main
+
+import (
+	"net/http"
+	"regexp"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+// We need an endpoint mapper implementation to avoid cardinality problems in metrics.
+// This is just a naive implementation for the example.
+
+// This type should wrap an efficient implementation, like https://github.com/hashicorp/go-immutable-radix
+type EndpointMapper struct {
+	productIDPathReg *regexp.Regexp
+}
+
+func NewEndpointMapper() *EndpointMapper {
+	return &EndpointMapper{
+		productIDPathReg: regexp.MustCompile("^/product/.*"),
+	}
+}
+
+func (m *EndpointMapper) Map(url string) string {
+	if m.productIDPathReg.MatchString(url) {
+		return "/product/{ID}"
+	}
+	return url
+}
+
+func main() {
+
+	// An endpoint mapper its needed.
+	endpointMapper := NewEndpointMapper()
+
+	// Configure middlewares with Prometheus defaults.
+	durationObserver := middleware.RequestDurationObserver(prometheus.DefaultRegisterer, prometheus.DefBuckets, endpointMapper)
+	sizeBuckets := []float64{1, 5, 10, 20, 40, 80} // This is very specific to your application.
+	sizeObserver := middleware.ResponseSizeObserver(prometheus.DefaultRegisterer, sizeBuckets, endpointMapper)
+
+	// Apply the middlewares to the product handler.
+	productHandler := middleware.For(productHandler(), durationObserver, sizeObserver)
+
+	// Configure the router, enabling metrics.
+	mux := http.NewServeMux()
+	mux.Handle("/product/1", productHandler) // In an advanced router, placeholders should be available. This is just for the example.
+	mux.Handle("/metrics", promhttp.Handler())
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	// Reach http://0.0.0.0:8080/product/1 , multiple times.
+	// Then Reach http://0.0.0.0:8080/metrics, we should see all metrics there.
+	// Note the placeholder {ID} instead of the real product id should be listed.
+}
+
+func productHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Heres the product one !"))
+	}
+}
+```
+
+The above example partially results in:
+
+```bash
+# HELP http_request_duration_seconds 
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.005"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.01"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.025"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.05"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.1"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.25"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="0.5"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="1"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="2.5"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="5"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="10"} 2
+http_request_duration_seconds_bucket{code="200",endpoint="/product/{ID}",method="GET",le="+Inf"} 2
+http_request_duration_seconds_sum{code="200",endpoint="/product/{ID}",method="GET"} 9.969499999999999e-05
+http_request_duration_seconds_count{code="200",endpoint="/product/{ID}",method="GET"} 2
+# HELP http_response_size 
+# TYPE http_response_size histogram
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="1"} 0
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="5"} 0
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="10"} 0
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="20"} 0
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="40"} 2
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="80"} 2
+http_response_size_bucket{code="200",endpoint="/product/{ID}",method="GET",le="+Inf"} 2
+http_response_size_sum{code="200",endpoint="/product/{ID}",method="GET"} 46
+http_response_size_count{code="200",endpoint="/product/{ID}",method="GET"} 2
+```
+
+The introduced placeholder `{ID}` avoids cardinality problems, allowing us to properly aggregate metrics and create awesome [Grafana](https://grafana.com) dashboards.
+
+This 2 middlewares should be enough for a standard HTTP application, as [Prometheus](https://prometheus.io) histograms already provides `*_sum` and `*_count` metrics. So counters and averages calculations are already available.
