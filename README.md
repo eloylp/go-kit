@@ -48,6 +48,7 @@ go get go.eloylp.dev/kit
 		- [Data Fanout](#data-fanout)
 		- [HTTP Middlewares](#http-middlewares)
 			- [Auth](#auth)
+			- [Logger](#logger)
 
 ### Archive tools
 
@@ -293,3 +294,46 @@ func handler() http.HandlerFunc {
 }
 ```
 Please visit code documentation for more clarification about each specific type/helper.
+
+#### Logger
+
+The logger middleware will print general request information in the standard output. It
+currently assumes the use of the `logrus` logger.
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"github.com/sirupsen/logrus"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+func main() {
+
+	logger := logrus.NewEntry(logrus.StandardLogger())
+	mid := middleware.RequestLogger(logger, logrus.InfoLevel)
+	handler := middleware.For(handler(), mid)
+
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+}
+
+func handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello !"))
+	}
+}
+```
+
+Heres the output in a terminal:
+
+```bash
+INFO[0001] intercepted request                           duration="15.645µs" headers="map[Accept:[text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8] Accept-Encoding:[gzip, deflate, br] Accept-Language:[en-GB,en] Cache-Control:[max-age=0] Connection:[keep-alive] Cookie:[redirect_to=%2F; Goland-976d74e5=8331d2d1-9f8e-48d8-a86a-6586446a99e0; Goland-976d74e6=81adf854-3ffb-4839-aa60-e7dbb375c58c] Sec-Ch-Ua:[\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\", \"Brave\";v=\"108\"] Sec-Ch-Ua-Mobile:[?0] Sec-Ch-Ua-Platform:[\"Linux\"] Sec-Fetch-Dest:[document] Sec-Fetch-Mode:[navigate] Sec-Fetch-Site:[none] Sec-Fetch-User:[?1] Sec-Gpc:[1] Upgrade-Insecure-Requests:[1] User-Agent:[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36]]" ip="[::1]:51110" method=GET path=/ response_size=7
+```
