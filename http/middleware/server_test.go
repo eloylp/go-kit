@@ -15,7 +15,9 @@ import (
 func TestServerHeader(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	
 	mid := middleware.ServerHeader("the server")
+	
 	mid(nullHandler).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Result().StatusCode)
