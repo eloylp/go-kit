@@ -48,7 +48,6 @@ go get go.eloylp.dev/kit
 		- [Data Fanout](#data-fanout)
 		- [HTTP Middlewares](#http-middlewares)
 			- [Auth](#auth)
-		- [Contributing](#contributing)
 
 ### Archive tools
 
@@ -294,17 +293,3 @@ func handler() http.HandlerFunc {
 }
 ```
 Please visit code documentation for more clarification about each specific type/helper.
-
-### Contributing
-
-Before a piece of code reaches this repository, this can be a summary of the previous steps:
-
-1. Code is created and tested in applications.
-
-2. A pattern is detected in other project with similar needs.
-
-3. Acceptable maturity of public interfaces is reached.
-
-4. The piece of software and the tests, are promoted to this repo.
-
-** idea : ite preferable to cover many use cases with an abstraction than making it too obtuse. In that case, a low level abstraction and a high level one should be provided.
