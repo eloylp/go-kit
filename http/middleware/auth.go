@@ -7,6 +7,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthConfig are the elements the AuthConfigFunc
+// needs to return in order to configure the
+// AuthChecker middleware.
+//
+// Having the possibility of returning multiple of this
+// configurations in AuthConfigFunc allows configuring
+// different user accesses for maybe different set of
+// endpoints.
+type AuthConfig struct {
+	Methods []string
+	Paths   []*regexp.Regexp
+	Auth    Authorization
+}
+
 // Authorization represent the user/encrypted-password table.
 // The keys are reserved for the user and the values for their respective
 // bcrypt encrypted passwords.
@@ -73,44 +87,32 @@ func isConfiguredMethod(requestMethod string, cfgMethods []string) bool {
 	return false
 }
 
-// AuthConfig are the elements the AuthConfigFunc
-// needs to return in order to configure the
-// AuthChecker middleware.
-//
-// Having the possibility of returning multiple of this 
-// configurations in AuthConfigFunc allows configuring
-// different user accesses for maybe different set of 
-// endpoints.
-type AuthConfig struct {
-	Methods []string
-	Paths   []*regexp.Regexp
-	Auth    Authorization
-}
-
 // NewAuthConfig returns a builder pattern that
-// will help to build a config for setup the AuthChecker middleware.
-// you must follow the fluent interface to set all the fields in the
-// struct.
+// helps to build a config for setup the
+// AuthChecker middleware.
 func NewAuthConfig() *AuthConfig { //nolint:golint
 	return &AuthConfig{}
 }
 
-// WithMethods sets the HTTP methods where all the protected endpoints will reside.
+// WithMethods configures the methods that are going
+// to be protected.
 func (a *AuthConfig) WithMethods(m []string) *AuthConfig {
 	a.Methods = m
 	return a
 }
 
-// WithPathRegex appends a regex pattern to be matched with the input path of the user.
-// The HTTP paths that matches this regexes will be protected. This method can be called
-// multiple times to add multiple regex.
+// WithPathRegex appends a regex pattern to be matched
+// with the input URL of the user.
+//
+// The HTTP paths that matches this regex's will be protected.
+// This method can be called multiple times to add multiple regex.
 func (a *AuthConfig) WithPathRegex(p string) *AuthConfig {
 	a.Paths = append(a.Paths, regexp.MustCompile(p))
 	return a
 }
 
-// WithAuth maps the user/password permissions. See Authorization struct type for more
-// information.
+// WithAuth maps the user/password permissions. See Authorization
+// for more information.
 func (a *AuthConfig) WithAuth(auth Authorization) *AuthConfig {
 	a.Auth = auth
 	return a
@@ -118,6 +120,8 @@ func (a *AuthConfig) WithAuth(auth Authorization) *AuthConfig {
 
 // AllMethods is a helper that provides all available
 // HTTP methods.
+//
+// Useful whenever we want to configure ALL methods.
 func AllMethods() []string {
 	return []string{
 		http.MethodGet,
