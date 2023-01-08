@@ -134,7 +134,7 @@ func authTestCases() []AuthTestCase {
 			SutConfig: middleware.AuthConfig{
 				Methods: []string{http.MethodGet},
 				Paths:   []*regexp.Regexp{
-					regexp.MustCompile("^/protected.*")
+					regexp.MustCompile("^/protected.*"),
 				},
 				Auth:    userAuth,
 			},
