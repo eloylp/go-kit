@@ -15,6 +15,7 @@ import (
 // to a metrics label due to combinatorial explosion. This means a path
 // can contain /product/[0-9] and each ID will generate a new whole
 // time series in a metrics system like prometheus.
+//
 // The recommendation is to wrap some efficient implementation for
 // properly matching prefixes. The recommendation is to use something
 // like a Radix tree implementation. See  https://github.com/hashicorp/go-immutable-radix .
@@ -23,9 +24,12 @@ type EndpointMapper interface {
 }
 
 // RequestDurationObserver will observe the duration of all the requests
-// and register them on a given Prometheus registry. It will use an histogram
-// where the client code can define its custom buckets. The client application
-// could also specify a namespace to not collide with other similar metrics names in the same runtime.
+// and register them on a given Prometheus registry.
+//
+// It will use an histogram where the client code can define its custom buckets.
+// The client application could also specify a namespace, in order to not collide
+// with other similar metrics names in the same runtime.
+//
 // Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
 func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64,
 	endpointMapper EndpointMapper) Middleware {
@@ -49,11 +53,12 @@ func RequestDurationObserver(namespace string, registry prometheus.Registerer, b
 	}
 }
 
-// ResponseSizeObserver will observe the size of the body of all the responses
-// and register them on a given Prometheus registry. It will use an histogram
-// where the client code can define its custom buckets. The client application
-// could also specify a namespace to not collide with other similar metrics names in the same runtime.
-// Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
+// ResponseSizeObserver will observe the size of the body of all the responses.
+//
+// It will use an histogram where the client code can define its custom buckets.
+// The client application could also specify a namespace to not collide with other similar
+// metrics names in the same runtime. Labels will reflect the HTTP method, code and the
+// endpoint mapped by EndpointMapper.
 func ResponseSizeObserver(namespace string, registry prometheus.Registerer, buckets []float64, endpointMapper EndpointMapper) Middleware {
 	observer := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
