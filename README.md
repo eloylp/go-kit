@@ -231,7 +231,7 @@ See internal code documentation for complete API and other details.
 ### HTTP Middlewares
 
 HTTP middlewares allow us to execute common logic before all our handlers,
-providing to all of them the same pre-processing logic. 
+providing to all of them the same pre-processing/post-processing logic.
 
 All this middlewares respect the standard library interfaces, so it should 
 not be a problem to use them with your favorite's HTTP lib also.
@@ -270,7 +270,7 @@ func main() {
 	// Configure the middleware with already setup config function.
 	authMiddleware := middleware.AuthChecker(cfgFunc)
 
-	// Prepare the router. In this example, we do it witrh the standard library.
+	// Prepare the router. In this example, we will use the standard library.
 	// More advanced routers would allow us to define this middleware for
 	// all routes globally.
 	mux := http.NewServeMux()
@@ -281,7 +281,9 @@ func main() {
 		panic(err)
 	}
 	// If we visit 0.0.0.0:8080/ we will see "Hello !"
-	// If we visit 0.0.0.0:8080/protected (or any subpath of it) without setting the proper auth heather, we will see "Unathorized"
+	// 
+	// If we visit 0.0.0.0:8080/protected (or any subpath of it) without setting 
+	// the proper auth heather, we will see "Unauthorized".
 }
 
 func handler() http.HandlerFunc {
@@ -291,7 +293,7 @@ func handler() http.HandlerFunc {
 	}
 }
 ```
-Please visit code documentation for more clarification about each specific type.
+Please visit code documentation for more clarification about each specific type/helper.
 
 ### Contributing
 
