@@ -37,9 +37,18 @@ go get go.eloylp.dev/kit
 
 ## Table of contents
 
-1. [Archive tools](#archive-tools)
-2. [Parallelization helpers](#parallelization-helpers)
-3. [Data fanout](#data-fanout)
+- [Go kit](#go-kit)
+	- [Introduction](#introduction)
+		- [Disclaimer](#disclaimer)
+	- [Motivation](#motivation)
+	- [How to use this library](#how-to-use-this-library)
+	- [Table of contents](#table-of-contents)
+		- [Archive tools](#archive-tools)
+		- [Parallelization helpers](#parallelization-helpers)
+		- [Data Fanout](#data-fanout)
+		- [HTTP Middlewares](#http-middlewares)
+			- [Auth](#auth)
+		- [Contributing](#contributing)
 
 ### Archive tools
 
@@ -91,7 +100,7 @@ Finally, if you need a **stream based** interface, take a look to the `Stream` f
 
 Some times its needed to parallelize a task during a certain time and gracefully wait until all the tasks are done.
 
-Imagine that we have a service called `MultiAPIService`, which has 2 APIs. An `HTTP` one and a `TCP` one. We want to do a stress test on this service with the [Go race detector](https://go.dev/blog/race-detector) enabled, in order to catch some nasty data races. Lets see a code example on how we can stress such APIs:
+Imagine that we have a service called `MultiAPIService`, which has 2 APIs. An `HTTP` one and a `TCP` one. We want to do a stress test on data-fanoutthis service with the [Go race detector](https://go.dev/blog/race-detector) enabled, in order to catch some nasty data races. Lets see a code example on how we can stress such APIs:
 
 ```go
 package main_test
@@ -218,6 +227,71 @@ consumer 1, received: 3
 If the buffer size of an specific consumer its exceeded, the oldest element will be discarded. This can cause slow consumers to loose data. This could be configurable in the future, though.
 
 See internal code documentation for complete API and other details.
+
+### HTTP Middlewares
+
+HTTP middlewares allow us to execute common logic before all our handlers,
+providing to all of them the same pre-processing logic. 
+
+All this middlewares respect the standard library interfaces, so it should 
+not be a problem to use them with your favorite's HTTP lib also.
+#### Auth
+
+The [basic Auth](https://www.rfc-editor.org/rfc/rfc7617) middleware provides a way 
+to authenticate a specific set of `paths` and `methods` with a given `auth configuration`. 
+It also allows multiple sets of configurations. Lets do a walk-through with a full example.
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+func main() {
+
+	// Setup the configuration function, that will return all
+	// configurations. For this basic case we only need one.
+	cfg := middleware.NewAuthConfig().
+		WithPathRegex("^/protected.*").
+		WithMethods(middleware.AllMethods()).
+		// The following hash can be generated like: https://unix.stackexchange.com/questions/307994/compute-bcrypt-hash-from-command-line
+		WithAuth(middleware.Authorization{
+			"user": "$2y$10$mAx10mlJ/UNbQJCgPp2oLe9n9jViYl9vlT0cYI3Nfop3P3bU1PDay", // unencrypted is user:password.
+		})
+
+	cfgs := []*middleware.AuthConfig{cfg}
+	cfgFunc := middleware.AuthConfigFunc(func() []*middleware.AuthConfig {
+		return cfgs
+	})
+
+	// Configure the middleware with already setup config function.
+	authMiddleware := middleware.AuthChecker(cfgFunc)
+
+	// Prepare the router. In this example, we do it witrh the standard library.
+	// More advanced routers would allow us to define this middleware for
+	// all routes globally.
+	mux := http.NewServeMux()
+	mux.Handle("/", handler())
+	mux.Handle("/protected", middleware.For(handler(), authMiddleware))
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+	// If we visit 0.0.0.0:8080/ we will see "Hello !"
+	// If we visit 0.0.0.0:8080/protected (or any subpath of it) without setting the proper auth heather, we will see "Unathorized"
+}
+
+func handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello !"))
+
+	}
+}
+```
+Please visit code documentation for more clarification about each specific type.
 
 ### Contributing
 
