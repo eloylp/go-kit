@@ -73,6 +73,14 @@ func isConfiguredMethod(requestMethod string, cfgMethods []string) bool {
 	return false
 }
 
+// AuthConfig are the elements the AuthConfigFunc
+// needs to return in order to configure the
+// AuthChecker middleware.
+//
+// Having the possibility of returning multiple of this 
+// configurations in AuthConfigFunc allows configuring
+// different user accesses for maybe different set of 
+// endpoints.
 type AuthConfig struct {
 	Methods []string
 	Paths   []*regexp.Regexp
