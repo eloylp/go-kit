@@ -26,7 +26,7 @@ func (e EndpointMapperMock) Map(url string) string {
 func TestRequestDurationObserver(t *testing.T) {
 	// Prepare prometheus registry
 	reg := prometheus.NewRegistry()
-	mid := middleware.RequestDurationObserver("app", reg, []float64{0.05, 0.08, 0.1, 0.2}, EndpointMapperMock{})
+	mid := middleware.RequestDurationObserver(reg, []float64{0.05, 0.08, 0.1, 0.2}, EndpointMapperMock{})
 
 	mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
@@ -42,20 +42,20 @@ func TestRequestDurationObserver(t *testing.T) {
 	require.NoError(t, err)
 	metrics := string(respMetrics)
 
-	assert.Contains(t, metrics, `# TYPE app_http_request_duration_seconds histogram`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.05"} 0`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.08"} 0`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.1"} 0`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.2"} 1`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="+Inf"} 1`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_sum{code="200",endpoint="mapped-/product",method="GET"}`)
-	assert.Contains(t, metrics, `app_http_request_duration_seconds_count{code="200",endpoint="mapped-/product",method="GET"} 1`)
+	assert.Contains(t, metrics, `# TYPE http_request_duration_seconds histogram`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.05"} 0`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.08"} 0`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.1"} 0`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="0.2"} 1`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_bucket{code="200",endpoint="mapped-/product",method="GET",le="+Inf"} 1`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_sum{code="200",endpoint="mapped-/product",method="GET"}`)
+	assert.Contains(t, metrics, `http_request_duration_seconds_count{code="200",endpoint="mapped-/product",method="GET"} 1`)
 }
 
 func TestResponseSizeObserver(t *testing.T) {
 	// Prepare prometheus registry
 	reg := prometheus.NewRegistry()
-	mid := middleware.ResponseSizeObserver("app", reg, []float64{4, 6}, EndpointMapperMock{})
+	mid := middleware.ResponseSizeObserver(reg, []float64{4, 6}, EndpointMapperMock{})
 
 	mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("hello"))
@@ -70,10 +70,10 @@ func TestResponseSizeObserver(t *testing.T) {
 	require.NoError(t, err)
 	metrics := string(respMetrics)
 
-	assert.Contains(t, metrics, `# TYPE app_http_response_size histogram`)
-	assert.Contains(t, metrics, `app_http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="4"} 0`)
-	assert.Contains(t, metrics, `app_http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="6"} 1`)
-	assert.Contains(t, metrics, `app_http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="+Inf"} 1`)
-	assert.Contains(t, metrics, `app_http_response_size_sum{code="200",endpoint="mapped-/product",method="GET"} 5`)
-	assert.Contains(t, metrics, `app_http_response_size_count{code="200",endpoint="mapped-/product",method="GET"} 1`)
+	assert.Contains(t, metrics, `# TYPE http_response_size histogram`)
+	assert.Contains(t, metrics, `http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="4"} 0`)
+	assert.Contains(t, metrics, `http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="6"} 1`)
+	assert.Contains(t, metrics, `http_response_size_bucket{code="200",endpoint="mapped-/product",method="GET",le="+Inf"} 1`)
+	assert.Contains(t, metrics, `http_response_size_sum{code="200",endpoint="mapped-/product",method="GET"} 5`)
+	assert.Contains(t, metrics, `http_response_size_count{code="200",endpoint="mapped-/product",method="GET"} 1`)
 }

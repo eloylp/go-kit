@@ -27,14 +27,10 @@ type EndpointMapper interface {
 // and register them on a given Prometheus registry.
 //
 // It will use an histogram where the client code can define its custom buckets.
-// The client application could also specify a namespace, in order to not collide
-// with other similar metrics names in the same runtime.
-//
 // Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
-func RequestDurationObserver(namespace string, registry prometheus.Registerer, buckets []float64,
+func RequestDurationObserver(registry prometheus.Registerer, buckets []float64,
 	endpointMapper EndpointMapper) Middleware {
 	observer := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: namespace,
 		Subsystem: "http_request",
 		Name:      "duration_seconds",
 		Buckets:   buckets,
@@ -56,12 +52,9 @@ func RequestDurationObserver(namespace string, registry prometheus.Registerer, b
 // ResponseSizeObserver will observe the size of the body of all the responses.
 //
 // It will use an histogram where the client code can define its custom buckets.
-// The client application could also specify a namespace to not collide with other similar
-// metrics names in the same runtime. Labels will reflect the HTTP method, code and the
-// endpoint mapped by EndpointMapper.
-func ResponseSizeObserver(namespace string, registry prometheus.Registerer, buckets []float64, endpointMapper EndpointMapper) Middleware {
+// Labels will reflect the HTTP method, code and the endpoint mapped by EndpointMapper.
+func ResponseSizeObserver(registry prometheus.Registerer, buckets []float64, endpointMapper EndpointMapper) Middleware {
 	observer := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: namespace,
 		Subsystem: "http_response",
 		Name:      "size",
 		Buckets:   buckets,
