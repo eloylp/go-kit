@@ -22,7 +22,9 @@ The uses of this module are under discovery. There's no stability promise. This 
 ## Motivation
 
 Software developers often work with similar patterns over and over again. This isn't exclusive regarding production code, but also testing
-patterns and tools. Go promotes the creation of small and cohesive tools. This repo is a space for that kind of small, reusable packages
+patterns and tools. 
+
+Go promotes the creation of small and cohesive tools. This repo is a space for that kind of small, reusable packages
 across projects.
 
 Its good to mention, that sometimes its preferable to copy some code than depending in third party libs. Feel free to just use this repo as an example.
