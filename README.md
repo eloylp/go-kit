@@ -27,7 +27,7 @@ patterns and tools.
 Go promotes the creation of small and cohesive tools. This repo is a space for that kind of small, reusable packages
 across projects.
 
-Its good to mention, that sometimes its preferable to copy some code than depending in third party libs. Feel free to just use this repo as an example.
+Its good to mention, that sometimes its preferable to copy some code than depending i	n third party libs. Feel free to just use this repo as an example.
 
 ## How to use this library
 
@@ -54,6 +54,7 @@ go get go.eloylp.dev/kit
 			- [Metrics](#metrics)
 			- [Default headers](#default-headers)
 			- [Panic handling](#panic-handling)
+		- [Time helpers](#time-helpers)
 
 ### Archive tools
 
@@ -555,3 +556,136 @@ $ 2023/01/09 18:10:04 panic detected: I was about to say hello, but i panicked !
 And allowing further operations to continue, without crashing the entire server.
 
 In a production scenario, we should instrument our handler function function with some kind of alerting.
+
+### Time helpers
+
+In heavily time centric applications, its important to resist the temptation
+of using `time.Now()` directly. Especially, if there are plans to do heavy
+testing on them.
+
+The following time helpers should work as a replacement for the original `time.Now()`,
+which can be easily injected during tests later.
+
+Lets begin checking a production code example, in which we deal with time centric code:
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"go.eloylp.dev/kit/moment"
+)
+
+func main() {
+
+	// By default the original time.Now() function is used, as this is the production code
+	shop := NewShop("Alice shoes")
+
+	fmt.Println(shop)
+
+	// Prints something like:
+	// "Alice shoes" its currently "open"
+}
+
+// Shop for the example. This
+// represents the time centric
+// code.
+//
+// It just says wether the shop
+// its opened or closed.
+type Shop struct {
+	name    string
+	nowFunc moment.NowFunc
+}
+
+func NewShop(name string) *Shop {
+	return &Shop{
+		name: name,
+		// By default we use time.Now() directly.
+		nowFunc: time.Now,
+	}
+}
+
+// IsOpen() tells if the shop is open.
+// No one works on weekends.
+func (a *Shop) IsOpen() bool {
+	weekday := a.nowFunc().Weekday()
+	if weekday == time.Saturday || weekday == time.Sunday {
+		return false
+	}
+	return true
+}
+
+// SetTimeFunc allows setting a
+// different source for time acquisition.
+func (a *Shop) SetTimeFunc(f moment.NowFunc) {
+	a.nowFunc = f
+}
+
+func (a *Shop) String() string {
+	var status string = "closed"
+	if a.IsOpen() {
+		status = "open"
+	}
+	return fmt.Sprintf("%q is currently %q", a.name, status)
+}
+```
+
+As we can observe, this code would be difficult to test if we are not able,
+to fake the current time. With such a change, now making tests is a breathe
+with the help of the `moment.NewFakedNow()` helper:
+
+```go
+package main
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"go.eloylp.dev/kit/moment"
+)
+
+func TestShopOpenings(t *testing.T) {
+
+	cases := []struct {
+		name         string
+		currentTime  string
+		shouldBeOpen bool
+	}{
+		{
+			name:         "It should be open starting on Monday",
+			currentTime:  "2023-01-15 00:00:00",
+			shouldBeOpen: false,
+		},
+		{
+			name:         "It should be closed starting the weekend",
+			currentTime:  "2023-01-14 00:00:00",
+			shouldBeOpen: false,
+		},
+
+		// More tests easily added here ...
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			// We can easily fake the current now ...
+			nowFunc := moment.NewFakedNow(t, c.currentTime)
+			shop := NewShop("Alice shop")
+			// Setting the faked Now() function as new time source ...
+			shop.SetTimeFunc(nowFunc)
+
+			if c.shouldBeOpen {
+				assert.True(t, shop.IsOpen(), "expected to be open, but its closed.")
+			} else {
+				assert.False(t, shop.IsOpen(), "expected to be closed, but its open")
+			}
+		})
+	}
+}
+```
+
+The above allows us to easily test boundaries while maintaining good readability. Always deal with absolute time in tests, never relative time.
