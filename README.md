@@ -50,6 +50,7 @@ go get go.eloylp.dev/kit
 			- [Auth](#auth)
 			- [Logger](#logger)
 			- [Metrics](#metrics)
+			- [Default headers](#default-headers)
 
 ### Archive tools
 
@@ -449,3 +450,47 @@ http_response_size_count{code="200",endpoint="/product/{ID}",method="GET"} 2
 The introduced placeholder `{ID}` avoids cardinality problems, allowing us to properly aggregate metrics and create awesome [Grafana](https://grafana.com) dashboards.
 
 This 2 middlewares should be enough for a standard HTTP application, as [Prometheus](https://prometheus.io) histograms already provides `*_sum` and `*_count` metrics. So counters and averages calculations are already available.
+
+#### Default headers
+
+This middleware allows users to set a default set of headers that will be added on every response.
+
+The following handlers have always the last responsibility on wether to override the job done by this middleware.
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+func main() {
+
+	// Define the default headers
+	defaultHeaders := middleware.DefaultHeaders{}
+	defaultHeaders.Set("Server", "random-server")
+
+	// Apply the middleware to the handler chain.
+	handler := middleware.For(handler(), middleware.ResponseHeaders(defaultHeaders))
+
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	// Visiting / shoud show us the following headers:
+	// Server: random-server
+	// X-Custom-Id: 09AF
+}
+
+func handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom-Id", "09AF")
+		w.Write([]byte("Hello !"))
+	}
+}
+```
