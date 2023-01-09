@@ -369,7 +369,7 @@ type EndpointMapper struct {
 
 func NewEndpointMapper() *EndpointMapper {
 	return &EndpointMapper{
-		productIDPathReg: regexp.MustCompile("^/product/.*"),
+		productIDPathReg: regexp.MustCompile(`^/product/\d+$`),
 	}
 }
 
