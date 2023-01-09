@@ -51,6 +51,7 @@ go get go.eloylp.dev/kit
 			- [Logger](#logger)
 			- [Metrics](#metrics)
 			- [Default headers](#default-headers)
+			- [Panic handling](#panic-handling)
 
 ### Archive tools
 
@@ -494,3 +495,61 @@ func handler() http.HandlerFunc {
 	}
 }
 ```
+
+#### Panic handling
+
+Its almost mandatory to protect HTTP servers from panics. If not, one handler can cause
+an entire service outage.
+
+A common practice is to define a general panic handler, that will act as protection for
+the entire system. Later on, downstream code could define their own panic handlers if
+they wish to manage each situation differently.
+
+The following middleware should be defined at very first of the handler chain:
+
+```go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+func main() {
+
+	// Defining our panic handler function.
+	handlerFunc := middleware.PanicHandlerFunc(func(v interface{}) {
+		log.Printf("panic detected: %v\n", v)
+	})
+
+	// Configuring the handler chain.
+	mid := middleware.PanicHandler(handlerFunc)
+	handler := middleware.For(handler(), mid)
+
+	mux := http.NewServeMux()
+	mux.Handle("/panic", handler)
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+}
+
+func handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		panic("I was about to say hello, but i panicked !")
+		w.Write([]byte("Hello !"))
+	}
+}
+```
+
+Visiting `/panic` should show us a similar terminal output like:
+
+```bash
+$ 2023/01/09 18:10:04 panic detected: I was about to say hello, but i panicked !
+```
+
+And allowing further operations to continue, without crashing the entire server.
+
+In a production scenario, we should instrument our handler function function with some kind of alerting.
