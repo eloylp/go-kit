@@ -15,7 +15,7 @@ Welcome gophers !
 This is a higher level, personal standard lib. A little space in the Git universe where its intended
 the [unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) to take place.
 
-### Disclaimer 
+## Disclaimer 
 
 The uses of this module are under discovery. There's no stability promise. This means that interfaces could change between commits. No other versioning is intended at this moment. 
 
@@ -41,7 +41,7 @@ go get go.eloylp.dev/kit
 
 - [Go kit](#go-kit)
 	- [Introduction](#introduction)
-		- [Disclaimer](#disclaimer)
+	- [Disclaimer](#disclaimer)
 	- [Motivation](#motivation)
 	- [How to use this library](#how-to-use-this-library)
 	- [Table of contents](#table-of-contents)
