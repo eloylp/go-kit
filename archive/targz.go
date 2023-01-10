@@ -10,8 +10,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"go.eloylp.dev/kit/pathutil"
 )
 
 // TARGZ creates a new tar.gz file in the provided path
@@ -69,7 +67,7 @@ func tarFromDir(path string, tarWriter *tar.Writer) (int64, error) {
 		if err != nil {
 			return err
 		}
-		header.Name, err = pathutil.RelativePath(path, currentPath)
+		header.Name, err = relativePath(path, currentPath)
 		if err != nil {
 			return err
 		}
@@ -163,7 +161,7 @@ func ExtractTARGZStream(stream io.Reader, path string) (int64, error) {
 			return 0, fmt.Errorf("failed reading next part of tar: %v", err)
 		}
 		extractionPath := filepath.Join(path, header.Name) //nolint:gosec
-		err = pathutil.PathInRoot(path, extractionPath)
+		err = pathInRoot(path, extractionPath)
 		if err != nil {
 			return 0, fmt.Errorf("path in root check: %v", err)
 		}

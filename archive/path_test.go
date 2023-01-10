@@ -1,11 +1,9 @@
 //go:build unit
 
-package pathutil_test
+package archive
 
 import (
 	"testing"
-
-	"go.eloylp.dev/kit/pathutil"
 )
 
 //nolint:scopelint
@@ -59,7 +57,7 @@ func TestRelativePath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := pathutil.RelativePath(tt.args.root, tt.args.requiredPath)
+			got, err := relativePath(tt.args.root, tt.args.requiredPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RelativePath() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -121,7 +119,7 @@ func TestPathInRoot(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := pathutil.PathInRoot(tt.args.docRoot, tt.args.path); (err != nil) != tt.wantErr {
+			if err := pathInRoot(tt.args.docRoot, tt.args.path); (err != nil) != tt.wantErr {
 				t.Errorf("PathInRoot() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
