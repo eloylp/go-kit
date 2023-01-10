@@ -49,6 +49,7 @@ go get go.eloylp.dev/kit
 	- [Default headers](#default-headers)
 	- [Panic handling](#panic-handling)
 - [Time helpers](#time-helpers)
+- [Public key Infrastructure](#public-key-infrastructure-pki)
 
 ### Archive tools
 
@@ -680,4 +681,70 @@ func TestShopOpenings(t *testing.T) {
 }
 ```
 
-The above allows us to easily test boundaries while maintaining good readability. Always deal with absolute time in tests, never relative time.
+The above allows us to easily test boundaries while maintaining good readability. Always deal with absolute time in tests, never relative time.### Time helpers
+
+### Public key infrastructure (PKI)
+
+Sometimes generating self signed certificates it something useful.
+Maybe you just want encryption and identity its not as such important. This
+could be the case of tests.
+
+This library provides a tool for that. Lets go through an example:
+
+```go
+package main
+
+import (
+	"crypto/tls"
+	"net"
+	"net/http"
+	"time"
+
+	"go.eloylp.dev/kit/pki"
+)
+
+func main() {
+	tlsCrt, err := pki.SelfSignedCert(
+		pki.WithCertSerialNumber(1),
+		pki.WithCertCommonName("example.com"),
+		pki.WithCertOrganization([]string{"self signed certs corp"}),
+		pki.WithCertIpAddresses([]string{"127.0.0.1"}),
+		pki.WithCertDNSNames([]string{"example.com"}),
+		pki.WithCertNotBefore(time.Now()),
+		pki.WithCertNotAfter(time.Now().Add(10*time.Hour)),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	server := http.Server{
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{tlsCrt},
+		},
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Hi ! this should be ecnrypted now."))
+		}),
+	}
+
+	l, err := net.Listen("tcp", "0.0.0.0:8080")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := server.ServeTLS(l, "", ""); err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	// Then we need to access https://127.0.0.1:8080/ or https://example.com:8080/ . The later one
+	// requires to tune your /etc/hosts with the line:
+	//
+	// 127.0.0.1 example.com
+	//
+	// After accepting the certificate authority its not valid, we should see the message:
+	//
+	// "Hi ! this should be ecnrypted now."
+	//
+	// As it indicates the communication should be secure in terms of encryption at this point.
+}
+```
