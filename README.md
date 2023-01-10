@@ -55,8 +55,8 @@ go get go.eloylp.dev/kit
 ### Archive tools
 
 We can create `tar.gz` file given any number of paths, which can be files or directories:
-    "toc.updateOnSave": false,
 
+```go
 import (
 	"fmt"
 
