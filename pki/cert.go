@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Opt represents a parameter for creating a new self-seigned
+// Opt represents a parameter for creating a new self-signed
 // certificate. See implementations below.
 type Opt func(cert *x509.Certificate)
 
