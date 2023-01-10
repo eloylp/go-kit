@@ -50,6 +50,7 @@ go get go.eloylp.dev/kit
 	- [Panic handling](#panic-handling)
 - [Time helpers](#time-helpers)
 - [Public key Infrastructure](#public-key-infrastructure-pki)
+- [Networking tools](#networking-tools)
 
 ### Archive tools
 
@@ -308,11 +309,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"go.eloylp.dev/kit/http/middleware"
-)
-
-func main() {
-
-	logger := logrus.NewEntry(logrus.StandardLogger())
+)Public key Infrastructurey(logrus.StandardLogger())
 	mid := middleware.RequestLogger(logger, logrus.InfoLevel)
 	handler := middleware.For(handler(), mid)
 
@@ -748,3 +745,47 @@ func main() {
 	// As it indicates the communication should be secure in terms of encryption at this point.
 }
 ```
+
+### Networking tools
+
+Very often its needed to wait for a service to be ready before connecting to it. This
+is especially the case in end to end testing or certain CLI tools. Here the `WaitTCPService()`
+and the `WaitTLSService()` can help on this task. Lets see an example:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"time"
+
+	"go.eloylp.dev/kit/network"
+)
+
+func main() {
+
+	addr := "127.0.0.1:8080"
+
+	// Create a socket in 1 second
+	time.AfterFunc(1*time.Second, func() {
+		_, err := net.Listen("tcp", addr)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	// We wait for it to be ready ...
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// We try each 300 ms until it connects.
+	if err := network.WaitTCPService(ctx, addr, 300*time.Millisecond); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Connected to %q", addr)
+}
+```
+If you need a `TLS` connection, try the `WaitTLSService()` variant.
