@@ -310,7 +310,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"go.eloylp.dev/kit/http/middleware"
-)Public key Infrastructurey(logrus.StandardLogger())
+)
+
+func main(){
+
+	logger := logrus.NewEntry(logrus.StandardLogger())
 	mid := middleware.RequestLogger(logger, logrus.InfoLevel)
 	handler := middleware.For(handler(), mid)
 
