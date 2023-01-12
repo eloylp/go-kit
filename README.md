@@ -51,6 +51,7 @@ go get go.eloylp.dev/kit
 - [Time helpers](#time-helpers)
 - [Public key Infrastructure](#public-key-infrastructure-pki)
 - [Networking tools](#networking-tools)
+- [Filesystem tools](#filesystem-tools)
 
 ### Archive tools
 
@@ -789,3 +790,29 @@ func main() {
 }
 ```
 If you need a `TLS` connection, try the `WaitTLSService()` variant.
+
+### File system tools
+
+A `copy` utility can be found at `filesys.Copy()` . It will recursively copy
+files and directories using streams of data, so low memory consumption.
+
+```go
+package main
+
+import (
+	"go.eloylp.dev/kit/filesys"
+)
+
+func main() {
+
+	source := "/home/user/data"
+	destination := "/home/user/backup"
+
+	if err := filesys.Copy(source, destination); err != nil {
+		panic(err)
+	}
+
+	// Now data and all its contents are copied to /home/user/backup
+}
+```
+It also accepts relative paths.
