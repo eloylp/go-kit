@@ -35,7 +35,7 @@ type TestAuxFunc func(t *testing.T)
 // passed as parameters, that need to include the setup and teardown logic. Probably,
 // this functions will need to implement t.Fatal() to not continue executing current test.
 // For the TestAuxFunc you can still pass nil , if yo dont have any logic for them.
-func Tester(t *testing.T, cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) {
+func Tester(t *testing.T, cases []Case, handler http.Handler) {
 
 	for _, tt := range cases {
 		if tt.setUp != nil {
@@ -45,7 +45,7 @@ func Tester(t *testing.T, cases []Case, router http.Handler, setUp, tearDown Tes
 		t.Run(name, func(t *testing.T) {
 			rec, req := httptest.NewRecorder(), httptest.NewRequest(tt.Method, tt.Path, tt.Body) //nolint:scopelint
 			req.Header = tt.Headers                                                              //nolint:scopelint
-			router.ServeHTTP(rec, req)
+			handler.ServeHTTP(rec, req)
 			res := rec.Result() //nolint:bodyclose
 			body, err := ioutil.ReadAll(res.Body)
 			if err != nil {
