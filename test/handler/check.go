@@ -1,4 +1,4 @@
-package check
+package handler
 
 import (
 	"crypto/md5" //nolint: gosec
@@ -9,21 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Function represents a checker function that will
+// CheckerFunc represents a checker function that will
 // endure certain results in handler response.
-type Function func(t *testing.T, w *http.Response, body []byte)
+type CheckerFunc func(t *testing.T, w *http.Response, body []byte)
 
-// Contains check for a valid substring in the response body
+// CheckContains check for a valid substring in the response body
 // of an HTTP handler.
-func Contains(want string) Function {
+func CheckContains(want string) CheckerFunc {
 	return func(t *testing.T, _ *http.Response, body []byte) {
 		require.Contains(t, string(body), want)
 	}
 }
 
-// MatchesMD5 checks that the response body of an HTTP handler
+// CheckMatchesMD5 checks that the response body of an HTTP handler
 // is equal to the wanted MD5 sum.
-func MatchesMD5(want string) Function {
+func CheckMatchesMD5(want string) CheckerFunc {
 	return func(t *testing.T, _ *http.Response, body []byte) {
 		m := md5.New() // nolint: gosec
 		if _, err := m.Write(body); err != nil {
@@ -34,28 +34,28 @@ func MatchesMD5(want string) Function {
 	}
 }
 
-// HasStatus checks for the specified HTTP status code in the
+// CheckHasStatus checks for the specified HTTP status code in the
 // handler response.
-func HasStatus(want int) Function {
+func CheckHasStatus(want int) CheckerFunc {
 	return func(t *testing.T, w *http.Response, body []byte) {
 		require.Equal(t, want, w.StatusCode)
 	}
 }
 
-// HasHeaders checks for wanted headers and will return an error
+// CheckHasHeaders checks for wanted headers and will return an error
 // with the non matched ones.
 // This only checks that the specified headers are present with its values.
 // This means that it could be more headers than the expected. In this case,
 // the test will pass.
-func HasHeaders(want http.Header) Function {
+func CheckHasHeaders(want http.Header) CheckerFunc {
 	return func(t *testing.T, w *http.Response, body []byte) {
 		require.Equal(t, want, w.Header)
 	}
 }
 
-// ContainsJSON checks for equality in for a JSON given
+// CheckContainsJSON checks for equality in for a JSON given
 // against the response body of an HTTP handler.
-func ContainsJSON(want string) Function {
+func CheckContainsJSON(want string) CheckerFunc {
 	return func(t *testing.T, _ *http.Response, body []byte) {
 		require.JSONEq(t, want, string(body), "body not contains expected json")
 	}

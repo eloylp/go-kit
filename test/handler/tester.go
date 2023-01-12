@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"go.eloylp.dev/kit/test/check"
 )
 
 // Case represents a test case for an HTTP handler.
@@ -22,7 +20,7 @@ type Case struct {
 	Case, Path, Method string
 	Body               io.Reader
 	Headers            http.Header
-	Checkers           []check.Function
+	Checkers           []CheckerFunc
 }
 
 // TestAuxFunc its the type for functions used to
