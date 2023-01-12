@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,13 +46,17 @@ func Tester(t *testing.T, cases []Case, handler http.Handler) {
 			rec, req := httptest.NewRecorder(), httptest.NewRequest(tt.Method, tt.Path, tt.Body) //nolint:scopelint
 			req.Header = tt.Headers                                                              //nolint:scopelint
 			handler.ServeHTTP(rec, req)
-			res := rec.Result() //nolint:bodyclose
-			body, err := ioutil.ReadAll(res.Body)
+			res := rec.Result()
+			// Save a copy of the body before checkers execution ...
+			body, err := io.ReadAll(res.Body)
 			if err != nil {
 				t.Fatal(err)
 			}
 			for _, chk := range tt.Checkers { //nolint:scopelint
-				chk(t, res, body)
+				// The body is a buffer that only can be consumed once. Send a new reader every time,
+				// so checkers don't need to worry about restoring the body.
+				res.Body = io.NopCloser(bytes.NewReader(body))
+				chk(t, res)
 			}
 		})
 		if tt.tearDown != nil {
