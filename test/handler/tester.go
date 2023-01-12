@@ -21,6 +21,8 @@ type Case struct {
 	Body               io.Reader
 	Headers            http.Header
 	Checkers           []CheckerFunc
+	setUp              TestAuxFunc
+	tearDown           TestAuxFunc
 }
 
 // TestAuxFunc its the type for functions used to
@@ -34,10 +36,11 @@ type TestAuxFunc func(t *testing.T)
 // this functions will need to implement t.Fatal() to not continue executing current test.
 // For the TestAuxFunc you can still pass nil , if yo dont have any logic for them.
 func Tester(t *testing.T, cases []Case, router http.Handler, setUp, tearDown TestAuxFunc) {
-	if setUp != nil {
-		setUp(t)
-	}
+
 	for _, tt := range cases {
+		if tt.setUp != nil {
+			tt.setUp(t)
+		}
 		name := fmt.Sprintf("path: %s, method: %s, case: %q", tt.Path, tt.Method, tt.Case)
 		t.Run(name, func(t *testing.T) {
 			rec, req := httptest.NewRecorder(), httptest.NewRequest(tt.Method, tt.Path, tt.Body) //nolint:scopelint
@@ -52,8 +55,8 @@ func Tester(t *testing.T, cases []Case, router http.Handler, setUp, tearDown Tes
 				chk(t, res, body)
 			}
 		})
-	}
-	if tearDown != nil {
-		tearDown(t)
+		if tt.tearDown != nil {
+			tt.tearDown(t)
+		}
 	}
 }
