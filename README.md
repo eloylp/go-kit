@@ -52,6 +52,9 @@ go get go.eloylp.dev/kit
 - [Public key Infrastructure](#public-key-infrastructure-pki)
 - [Networking tools](#networking-tools)
 - [Filesystem tools](#filesystem-tools)
+- [Testing tools](#testing-tools)
+    - [HTTP handlers](#http-handlers)
+
 
 ### Archive tools
 
@@ -820,3 +823,94 @@ func main() {
 }
 ```
 It also accepts relative paths.
+
+
+### Testing tools
+
+In Go, we pass `testing.*` through functions as first argument. That promotes the creation of awesome, 
+cohesive tests infrastructures that maximizes the re-usability of the code. We can pass the `testing.*`
+through functions which are at a different abstraction levels. Here we will see some tools/examples.
+
+#### HTTP Handlers
+
+Imagine we need to test an HTTP API. Such API is subject to a protocol (HTTP), in which we could
+base our testing infrastructure design.
+
+On this repo there is a `handler.Tester` which accepts an `http.Handler` (the SUT) and
+a list of `handler.Case`. Inside each `handler.Case` , we can define a list of `handler.CheckerFunc`. 
+At the same time, each `handler.CheckerFunc` will hold the necessary logic to test a different aspect 
+of the HTTP response.
+
+See the handler [code](./test/handler) for a list of all available checkers and low level details.
+
+Lets now see an example on how to test an HTTP API with the `handler.Tester` tool:
+```go
+package main_test
+
+import (
+	"net/http"
+	"testing"
+
+	"go.eloylp.dev/kit/test/handler"
+)
+
+func TestRouter(t *testing.T) {
+	// Setup the handler, in this case, a whole router. This is the SUT,
+	// which in a real application, should be in production code.
+	router := router()
+	// Define all the cases.
+	cases := []handler.Case{
+		{
+			Case:   "Index should be shown",
+			Path:   "/",
+			Method: http.MethodGet,
+			Checkers: []handler.CheckerFunc{
+				handler.CheckContains("Well, this is go-kit"),
+			},
+			SetUp: func(t *testing.T) {
+				// Bring up the database.
+			},
+			TearDown: func(t *testing.T) {
+				// Clear the database.
+			},
+		},
+		{
+			Case:   "Expected API response",
+			Path:   "/api",
+			Method: http.MethodGet,
+			Checkers: []handler.CheckerFunc{
+				handler.CheckContainsJSON(`{"type": "greet", "content": "hello !"}`),
+			},
+		},
+	}
+	// Will execute all the cases against the router/handler.
+	handler.Tester(t, cases, router)
+}
+
+func router() *http.ServeMux {
+	router := http.NewServeMux()
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Document</title>
+		</head>
+		<body>
+			Well, this is go-kit 			
+		</body>
+		</html>`))
+	})
+	router.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+		{
+			"type": "greet", 
+			"content": "hello !"
+		}`
+		))
+	})
+	return router
+}
+```
