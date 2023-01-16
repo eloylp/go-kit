@@ -23,10 +23,10 @@ type Case struct {
 	Checkers []CheckerFunc
 	// The setUp functions optionally allows configuring test dependencies,
 	// like databases.
-	setUp TestAuxFunc
+	SetUp TestAuxFunc
 	// The tearDown functions optionally allows shutdown test dependencies,
 	// like databases.
-	tearDown TestAuxFunc
+	TearDown TestAuxFunc
 }
 
 // TestAuxFunc its the type for functions used to
@@ -43,8 +43,8 @@ type TestAuxFunc func(t *testing.T)
 func Tester(t *testing.T, cases []Case, handler http.Handler) {
 
 	for _, tt := range cases {
-		if tt.setUp != nil {
-			tt.setUp(t)
+		if tt.SetUp != nil {
+			tt.SetUp(t)
 		}
 		name := fmt.Sprintf("path: %s, method: %s, case: %q", tt.Path, tt.Method, tt.Case)
 		t.Run(name, func(t *testing.T) {
@@ -64,8 +64,8 @@ func Tester(t *testing.T, cases []Case, handler http.Handler) {
 				chk(t, res)
 			}
 		})
-		if tt.tearDown != nil {
-			tt.tearDown(t)
+		if tt.TearDown != nil {
+			tt.TearDown(t)
 		}
 	}
 }
