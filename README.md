@@ -40,23 +40,23 @@ go get go.eloylp.dev/kit
 ## Table of contents
 
 - [Archive tools](#archive-tools)
-- [Parallelization helpers](#parallelization-helpers)
 - [Data Fanout](#data-fanout)
+- [Filesystem tools](#filesystem-tools)
 - [HTTP Middlewares](#http-middlewares)
 	- [Auth](#auth)
+	- [Default headers](#default-headers)
 	- [Logger](#logger)
 	- [Metrics](#metrics)
-	- [Default headers](#default-headers)
 	- [Panic handling](#panic-handling)
-- [Time helpers](#time-helpers)
-- [Public key Infrastructure](#public-key-infrastructure-pki)
 - [Networking tools](#networking-tools)
-- [Filesystem tools](#filesystem-tools)
+- [Parallelization helpers](#parallelization-helpers)
+- [Public key Infrastructure](#public-key-infrastructure-pki)
 - [Testing tools](#testing-tools)
     - [HTTP handlers](#http-handlers)
+- [Time helpers](#time-helpers)
 
 
-### Archive tools
+## Archive tools
 
 We can create `tar.gz` file given any number of paths, which can be files or directories:
 
@@ -100,54 +100,7 @@ func main() {
 
 Finally, if you need a **stream based** interface, take a look to the `Stream` functions in the same package.
 
-### Parallelization helpers
-
-Some times its needed to parallelize a task during a certain time and gracefully wait until all the tasks are done.
-
-Imagine that we have a service called `MultiAPIService`, which has 2 APIs. An `HTTP` one and a `TCP` one. We want to do a stress test on data-fanoutthis service with the [Go race detector](https://go.dev/blog/race-detector) enabled, in order to catch some nasty data races. Lets see a code example on how we can stress such APIs:
-
-```go
-package main_test
-
-import (
-	"context"
-	"sync"
-	"testing"
-	"time"
-
-	"go.eloylp.dev/kit/exec"
-)
-
-func TestMain(t *testing.T) {
-
-	// Service initialization logic ...
-
-	const MAX_CONCURRENT = 10 // Max concurrent jobs per API.
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Test time.
-	defer cancel()
-
-	wg := &sync.WaitGroup{}
-
-	// Launch all the parallelization for both APIs with exec.Parallelize
-	go exec.Parallelize(ctx, wg, MAX_CONCURRENT, doHTTPRequest)
-	exec.Parallelize(ctx, wg, MAX_CONCURRENT, doTCPRequest)
-
-	wg.Wait() // Waiting for all tasks to end.
-
-	// Service shutdown logic ...
-}
-
-func doHTTPRequest() {
-	time.Sleep(100 * time.Millisecond)
-}
-
-func doTCPRequest() {
-	time.Sleep(50 * time.Millisecond)
-}
-```
-
-### Data Fanout
+## Data Fanout
 
 Current implementation of Go channels does not allow
 to broadcast same values to all consumers. This fanout solution comes to rescue:
@@ -232,14 +185,40 @@ If the buffer size of an specific consumer its exceeded, the oldest element will
 
 See internal code documentation for complete API and other details.
 
-### HTTP Middlewares
+## File system tools
+
+A `copy` utility can be found at `filesys.Copy()` . It will recursively copy
+files and directories using streams of data, so low memory consumption.
+
+```go
+package main
+
+import (
+	"go.eloylp.dev/kit/filesys"
+)
+
+func main() {
+
+	source := "/home/user/data"
+	destination := "/home/user/backup"
+
+	if err := filesys.Copy(source, destination); err != nil {
+		panic(err)
+	}
+
+	// Now data and all its contents are copied to /home/user/backup
+}
+```
+It also accepts relative paths.
+
+## HTTP Middlewares
 
 HTTP middlewares allow us to execute common logic before all our handlers,
 providing to all of them the same pre-processing/post-processing logic.
 
 All this middlewares respect the standard library interfaces, so it should 
 not be a problem to use them with your favorite's HTTP lib also.
-#### Auth
+### Auth
 
 The [basic Auth](https://www.rfc-editor.org/rfc/rfc7617) middleware provides a way 
 to authenticate a specific set of `paths` and `methods` with a given `auth configuration`. 
@@ -299,7 +278,51 @@ func handler() http.HandlerFunc {
 ```
 Please visit code documentation for more clarification about each specific type/helper.
 
-#### Logger
+### Default headers
+
+This middleware allows users to set a default set of headers that will be added on every response.
+
+The following handlers have always the last responsibility on wether to override the job done by this middleware.
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"go.eloylp.dev/kit/http/middleware"
+)
+
+func main() {
+
+	// Define the default headers
+	defaultHeaders := middleware.DefaultHeaders{}
+	defaultHeaders.Set("Server", "random-server")
+
+	// Apply the middleware to the handler chain.
+	handler := middleware.For(handler(), middleware.ResponseHeaders(defaultHeaders))
+
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
+
+	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	// Visiting / shoud show us the following headers:
+	// Server: random-server
+	// X-Custom-Id: 09AF
+}
+
+func handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom-Id", "09AF")
+		w.Write([]byte("Hello !"))
+	}
+}
+```
+
+### Logger
 
 The logger middleware will print general request information in the standard output. It
 currently assumes the use of the `logrus` logger.
@@ -342,7 +365,7 @@ Heres the output in a terminal:
 INFO[0001] intercepted request                           duration="15.645µs" headers="map[Accept:[text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8] Accept-Encoding:[gzip, deflate, br] Accept-Language:[en-GB,en] Cache-Control:[max-age=0] Connection:[keep-alive] Cookie:[redirect_to=%2F; Goland-976d74e5=8331d2d1-9f8e-48d8-a86a-6586446a99e0; Goland-976d74e6=81adf854-3ffb-4839-aa60-e7dbb375c58c] Sec-Ch-Ua:[\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\", \"Brave\";v=\"108\"] Sec-Ch-Ua-Mobile:[?0] Sec-Ch-Ua-Platform:[\"Linux\"] Sec-Fetch-Dest:[document] Sec-Fetch-Mode:[navigate] Sec-Fetch-Site:[none] Sec-Fetch-User:[?1] Sec-Gpc:[1] Upgrade-Insecure-Requests:[1] User-Agent:[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36]]" ip="[::1]:51110" method=GET path=/ response_size=7
 ```
 
-#### Metrics
+### Metrics
 
 The metrics middlewares allows instrumenting an application really fast 
 with [Prometheus](https://prometheus.io) metrics !
@@ -453,51 +476,7 @@ The introduced placeholder `{ID}` avoids cardinality problems, allowing us to pr
 
 This 2 middlewares should be enough for a standard HTTP application, as [Prometheus](https://prometheus.io) histograms already provides `*_sum` and `*_count` metrics. So counters and averages calculations are already available.
 
-#### Default headers
-
-This middleware allows users to set a default set of headers that will be added on every response.
-
-The following handlers have always the last responsibility on wether to override the job done by this middleware.
-
-```go
-package main
-
-import (
-	"net/http"
-
-	"go.eloylp.dev/kit/http/middleware"
-)
-
-func main() {
-
-	// Define the default headers
-	defaultHeaders := middleware.DefaultHeaders{}
-	defaultHeaders.Set("Server", "random-server")
-
-	// Apply the middleware to the handler chain.
-	handler := middleware.For(handler(), middleware.ResponseHeaders(defaultHeaders))
-
-	mux := http.NewServeMux()
-	mux.Handle("/", handler)
-
-	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
-		panic(err)
-	}
-
-	// Visiting / shoud show us the following headers:
-	// Server: random-server
-	// X-Custom-Id: 09AF
-}
-
-func handler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Custom-Id", "09AF")
-		w.Write([]byte("Hello !"))
-	}
-}
-```
-
-#### Panic handling
+### Panic handling
 
 Its almost mandatory to protect HTTP servers from panics. If not, one handler can cause
 an entire service outage.
@@ -554,6 +533,253 @@ $ 2023/01/09 18:10:04 panic detected: I was about to say hello, but i panicked !
 And allowing further operations to continue, without crashing the entire server.
 
 In a production scenario, we should instrument our handler function function with some kind of alerting.
+
+### Networking tools
+
+Very often its needed to wait for a service to be ready before connecting to it. This
+is especially the case in end to end testing or certain CLI tools. Here the `WaitTCPService()`
+and the `WaitTLSService()` can help on this task. Lets see an example:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"time"
+
+	"go.eloylp.dev/kit/network"
+)
+
+func main() {
+
+	addr := "127.0.0.1:8080"
+
+	// Create a socket in 1 second
+	time.AfterFunc(1*time.Second, func() {
+		_, err := net.Listen("tcp", addr)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	// We wait for it to be ready ...
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// We try each 300 ms until it connects.
+	if err := network.WaitTCPService(ctx, addr, 300*time.Millisecond); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Connected to %q", addr)
+}
+```
+If you need a `TLS` connection, try the `WaitTLSService()` variant.
+
+### Parallelization helpers
+
+Some times its needed to parallelize a task during a certain time and gracefully wait until all the tasks are done.
+
+Imagine that we have a service called `MultiAPIService`, which has 2 APIs. An `HTTP` one and a `TCP` one. We want to do a stress test on data-fanoutthis service with the [Go race detector](https://go.dev/blog/race-detector) enabled, in order to catch some nasty data races. Lets see a code example on how we can stress such APIs:
+
+```go
+package main_test
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"go.eloylp.dev/kit/exec"
+)
+
+func TestMain(t *testing.T) {
+
+	// Service initialization logic ...
+
+	const MAX_CONCURRENT = 10 // Max concurrent jobs per API.
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Test time.
+	defer cancel()
+
+	wg := &sync.WaitGroup{}
+
+	// Launch all the parallelization for both APIs with exec.Parallelize
+	go exec.Parallelize(ctx, wg, MAX_CONCURRENT, doHTTPRequest)
+	exec.Parallelize(ctx, wg, MAX_CONCURRENT, doTCPRequest)
+
+	wg.Wait() // Waiting for all tasks to end.
+
+	// Service shutdown logic ...
+}
+
+func doHTTPRequest() {
+	time.Sleep(100 * time.Millisecond)
+}
+
+func doTCPRequest() {
+	time.Sleep(50 * time.Millisecond)
+}
+```
+
+### Public key infrastructure (PKI)
+
+Sometimes generating self signed certificates it something useful.
+Maybe you just want encryption and identity its not as such important. This
+could be the case of tests.
+
+This library provides a tool for that. Lets go through an example:
+
+```go
+package main
+
+import (
+	"crypto/tls"
+	"net"
+	"net/http"
+	"time"
+
+	"go.eloylp.dev/kit/pki"
+)
+
+func main() {
+	tlsCrt, err := pki.SelfSignedCert(
+		pki.WithCertSerialNumber(1),
+		pki.WithCertCommonName("example.com"),
+		pki.WithCertOrganization([]string{"self signed certs corp"}),
+		pki.WithCertIpAddresses([]string{"127.0.0.1"}),
+		pki.WithCertDNSNames([]string{"example.com"}),
+		pki.WithCertNotBefore(time.Now()),
+		pki.WithCertNotAfter(time.Now().Add(10*time.Hour)),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	server := http.Server{
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{tlsCrt},
+		},
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Hi ! this should be ecnrypted now."))
+		}),
+	}
+
+	l, err := net.Listen("tcp", "0.0.0.0:8080")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := server.ServeTLS(l, "", ""); err != http.ErrServerClosed {
+		panic(err)
+	}
+
+	// Then we need to access https://127.0.0.1:8080/ or https://example.com:8080/ . The later one
+	// requires to tune your /etc/hosts with the line:
+	//
+	// 127.0.0.1 example.com
+	//
+	// After accepting the certificate authority its not valid, we should see the message:
+	//
+	// "Hi ! this should be ecnrypted now."
+	//
+	// As it indicates the communication should be secure in terms of encryption at this point.
+}
+```
+
+### Testing tools
+
+In Go, we pass `testing.*` through functions as first argument. That promotes the creation of awesome, 
+cohesive tests infrastructures that maximizes the re-usability of the code. We can pass the `testing.*`
+through functions which are at a different abstraction levels. Here we will see some tools/examples.
+
+#### HTTP Handlers
+
+Imagine we need to test an HTTP API. Such API is subject to a protocol (HTTP), in which we could
+base our testing infrastructure design.
+
+On this repo there is a `handler.Tester` which accepts an `http.Handler` (the SUT) and
+a list of `handler.Case`. Inside each `handler.Case` , we can define a list of `handler.CheckerFunc`. 
+At the same time, each `handler.CheckerFunc` will hold the necessary logic to test a different aspect 
+of the HTTP response.
+
+See the handler [code](./test/handler) for a list of all available checkers and low level details.
+
+Lets now see an example on how to test an HTTP API with the `handler.Tester` tool:
+```go
+package main_test
+
+import (
+	"net/http"
+	"testing"
+
+	"go.eloylp.dev/kit/test/handler"
+)
+
+func TestRouter(t *testing.T) {
+	// Setup the handler, in this case, a whole router. This is the SUT,
+	// which in a real application, should be in production code.
+	router := router()
+	// Define all the cases.
+	cases := []handler.Case{
+		{
+			Case:   "Index should be shown",
+			Path:   "/",
+			Method: http.MethodGet,
+			Checkers: []handler.CheckerFunc{
+				handler.CheckContains("Well, this is go-kit"),
+			},
+			SetUp: func(t *testing.T) {
+				// Bring up the database.
+			},
+			TearDown: func(t *testing.T) {
+				// Clear the database.
+			},
+		},
+		{
+			Case:   "Expected API response",
+			Path:   "/api",
+			Method: http.MethodGet,
+			Checkers: []handler.CheckerFunc{
+				handler.CheckContainsJSON(`{"type": "greet", "content": "hello !"}`),
+			},
+		},
+	}
+	// Will execute all the cases against the router/handler.
+	handler.Tester(t, cases, router)
+}
+
+func router() *http.ServeMux {
+	router := http.NewServeMux()
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Document</title>
+		</head>
+		<body>
+			Well, this is go-kit 			
+		</body>
+		</html>`))
+	})
+	router.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+		{
+			"type": "greet", 
+			"content": "hello !"
+		}`
+		))
+	})
+	return router
+}
+```
 
 ### Time helpers
 
@@ -686,231 +912,4 @@ func TestShopOpenings(t *testing.T) {
 }
 ```
 
-The above allows us to easily test boundaries while maintaining good readability. Always deal with absolute time in tests, never relative time.### Time helpers
-
-### Public key infrastructure (PKI)
-
-Sometimes generating self signed certificates it something useful.
-Maybe you just want encryption and identity its not as such important. This
-could be the case of tests.
-
-This library provides a tool for that. Lets go through an example:
-
-```go
-package main
-
-import (
-	"crypto/tls"
-	"net"
-	"net/http"
-	"time"
-
-	"go.eloylp.dev/kit/pki"
-)
-
-func main() {
-	tlsCrt, err := pki.SelfSignedCert(
-		pki.WithCertSerialNumber(1),
-		pki.WithCertCommonName("example.com"),
-		pki.WithCertOrganization([]string{"self signed certs corp"}),
-		pki.WithCertIpAddresses([]string{"127.0.0.1"}),
-		pki.WithCertDNSNames([]string{"example.com"}),
-		pki.WithCertNotBefore(time.Now()),
-		pki.WithCertNotAfter(time.Now().Add(10*time.Hour)),
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	server := http.Server{
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{tlsCrt},
-		},
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Hi ! this should be ecnrypted now."))
-		}),
-	}
-
-	l, err := net.Listen("tcp", "0.0.0.0:8080")
-	if err != nil {
-		panic(err)
-	}
-
-	if err := server.ServeTLS(l, "", ""); err != http.ErrServerClosed {
-		panic(err)
-	}
-
-	// Then we need to access https://127.0.0.1:8080/ or https://example.com:8080/ . The later one
-	// requires to tune your /etc/hosts with the line:
-	//
-	// 127.0.0.1 example.com
-	//
-	// After accepting the certificate authority its not valid, we should see the message:
-	//
-	// "Hi ! this should be ecnrypted now."
-	//
-	// As it indicates the communication should be secure in terms of encryption at this point.
-}
-```
-
-### Networking tools
-
-Very often its needed to wait for a service to be ready before connecting to it. This
-is especially the case in end to end testing or certain CLI tools. Here the `WaitTCPService()`
-and the `WaitTLSService()` can help on this task. Lets see an example:
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"net"
-	"time"
-
-	"go.eloylp.dev/kit/network"
-)
-
-func main() {
-
-	addr := "127.0.0.1:8080"
-
-	// Create a socket in 1 second
-	time.AfterFunc(1*time.Second, func() {
-		_, err := net.Listen("tcp", addr)
-		if err != nil {
-			panic(err)
-		}
-	})
-
-	// We wait for it to be ready ...
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	// We try each 300 ms until it connects.
-	if err := network.WaitTCPService(ctx, addr, 300*time.Millisecond); err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Connected to %q", addr)
-}
-```
-If you need a `TLS` connection, try the `WaitTLSService()` variant.
-
-### File system tools
-
-A `copy` utility can be found at `filesys.Copy()` . It will recursively copy
-files and directories using streams of data, so low memory consumption.
-
-```go
-package main
-
-import (
-	"go.eloylp.dev/kit/filesys"
-)
-
-func main() {
-
-	source := "/home/user/data"
-	destination := "/home/user/backup"
-
-	if err := filesys.Copy(source, destination); err != nil {
-		panic(err)
-	}
-
-	// Now data and all its contents are copied to /home/user/backup
-}
-```
-It also accepts relative paths.
-
-
-### Testing tools
-
-In Go, we pass `testing.*` through functions as first argument. That promotes the creation of awesome, 
-cohesive tests infrastructures that maximizes the re-usability of the code. We can pass the `testing.*`
-through functions which are at a different abstraction levels. Here we will see some tools/examples.
-
-#### HTTP Handlers
-
-Imagine we need to test an HTTP API. Such API is subject to a protocol (HTTP), in which we could
-base our testing infrastructure design.
-
-On this repo there is a `handler.Tester` which accepts an `http.Handler` (the SUT) and
-a list of `handler.Case`. Inside each `handler.Case` , we can define a list of `handler.CheckerFunc`. 
-At the same time, each `handler.CheckerFunc` will hold the necessary logic to test a different aspect 
-of the HTTP response.
-
-See the handler [code](./test/handler) for a list of all available checkers and low level details.
-
-Lets now see an example on how to test an HTTP API with the `handler.Tester` tool:
-```go
-package main_test
-
-import (
-	"net/http"
-	"testing"
-
-	"go.eloylp.dev/kit/test/handler"
-)
-
-func TestRouter(t *testing.T) {
-	// Setup the handler, in this case, a whole router. This is the SUT,
-	// which in a real application, should be in production code.
-	router := router()
-	// Define all the cases.
-	cases := []handler.Case{
-		{
-			Case:   "Index should be shown",
-			Path:   "/",
-			Method: http.MethodGet,
-			Checkers: []handler.CheckerFunc{
-				handler.CheckContains("Well, this is go-kit"),
-			},
-			SetUp: func(t *testing.T) {
-				// Bring up the database.
-			},
-			TearDown: func(t *testing.T) {
-				// Clear the database.
-			},
-		},
-		{
-			Case:   "Expected API response",
-			Path:   "/api",
-			Method: http.MethodGet,
-			Checkers: []handler.CheckerFunc{
-				handler.CheckContainsJSON(`{"type": "greet", "content": "hello !"}`),
-			},
-		},
-	}
-	// Will execute all the cases against the router/handler.
-	handler.Tester(t, cases, router)
-}
-
-func router() *http.ServeMux {
-	router := http.NewServeMux()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta http-equiv="X-UA-Compatible" content="IE=edge">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>Document</title>
-		</head>
-		<body>
-			Well, this is go-kit 			
-		</body>
-		</html>`))
-	})
-	router.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`
-		{
-			"type": "greet", 
-			"content": "hello !"
-		}`
-		))
-	})
-	return router
-}
-```
+The above allows us to easily test boundaries while maintaining good readability. Always deal with absolute time in tests, never relative time.
