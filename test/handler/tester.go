@@ -10,19 +10,23 @@ import (
 )
 
 // Case represents a test case for an HTTP handler.
-// The field Case must be a brief description of what
-// is being tested.
-// Checkers field is an slice of check.Function, that will
-// be run against the response of the router.
-// The rest of the fields are what forms the HTTP request
-// for running the handler under test.
 type Case struct {
-	Case, Path, Method string
-	Body               io.Reader
-	Headers            http.Header
-	Checkers           []CheckerFunc
-	setUp              TestAuxFunc
-	tearDown           TestAuxFunc
+	// Case is name for the given test scenario.
+	Case,
+	// Following fields represents the data for the request
+	Path,
+	Method string
+	Body    io.Reader
+	Headers http.Header
+	// Checkers is list of checkers to apply to the response of the request.
+	// See functions like handler.CheckContains() on this package.
+	Checkers []CheckerFunc
+	// The setUp functions optionally allows configuring test dependencies,
+	// like databases.
+	setUp TestAuxFunc
+	// The tearDown functions optionally allows shutdown test dependencies,
+	// like databases.
+	tearDown TestAuxFunc
 }
 
 // TestAuxFunc its the type for functions used to
@@ -30,11 +34,12 @@ type Case struct {
 // a handler test is executed.
 type TestAuxFunc func(t *testing.T)
 
-// Tester will take all the handler test cases and run them serialized.
-// It will execute the corresponding setUp and tearDown TestAuxFunc functions,
-// passed as parameters, that need to include the setup and teardown logic. Probably,
-// this functions will need to implement t.Fatal() to not continue executing current test.
-// For the TestAuxFunc you can still pass nil , if yo dont have any logic for them.
+// Tester will test the provided HTTP handler by executing
+// take all the test []Case in a serialized way.
+//
+// If provided, it will execute the corresponding
+// setUp and tearDown TestAuxFunc functions per each
+// test case. See Case type on how to configure them.
 func Tester(t *testing.T, cases []Case, handler http.Handler) {
 
 	for _, tt := range cases {
