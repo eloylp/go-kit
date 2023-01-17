@@ -17,21 +17,20 @@ the [unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) to take pla
 
 ## Disclaimer 
 
-The uses of this module are under discovery. There's no stability promise. This means that interfaces could change between commits. No other versioning is intended at this moment. 
+The uses of this module are under discovery. There's no stability promise. This means interfaces could change between commits. No other versioning its intended at this moment. 
 
 ## Motivation
 
-Software developers often work with similar patterns over and over again. This isn't exclusive regarding production code, but also testing
-patterns and tools. 
+Software developers often work with similar patterns over and over again. This isn't exclusive for production code, but also testing patterns and tools. 
 
 Go promotes the creation of small and cohesive tools. This repo is a space for that kind of small, reusable packages
 across projects.
 
-Its good to mention, that sometimes its preferable to copy some code than depending i	n third party libs. Feel free to just use this repo as an example.
+Its good to mention, that sometimes its preferable to copy some code than depending on third party libs. Feel free to just use this repo as an example.
 
 ## How to use this library
 
-In order to use any of the packages of this Go module, use the following import url:
+Always use the following import url:
 
 ```
 go get go.eloylp.dev/kit
@@ -58,7 +57,7 @@ go get go.eloylp.dev/kit
 
 ## Archive tools
 
-We can create `tar.gz` file given any number of paths, which can be files or directories:
+We can create a `tar.gz` file given any number of paths, which can be files or directories:
 
 ```go
 import (
@@ -102,8 +101,7 @@ Finally, if you need a **stream based** interface, take a look to the `Stream` f
 
 ## Data Fanout
 
-Current implementation of Go channels does not allow
-to broadcast same values to all consumers. This fanout solution comes to rescue:
+Current implementation of Go channels does not allow to broadcast a single value to all consumers. This fanout solution comes to rescue:
 
 ```go
 package main
@@ -185,10 +183,9 @@ If the buffer size of an specific consumer its exceeded, the oldest element will
 
 See internal code documentation for complete API and other details.
 
-## File system tools
+## Filesystem tools
 
-A `copy` utility can be found at `filesys.Copy()` . It will recursively copy
-files and directories using streams of data, so low memory consumption.
+A `copy` utility can be found at `filesys.Copy()` . It will recursively copy files and directories using streams of data, so low memory consumption. It also accepts relative paths.
 
 ```go
 package main
@@ -209,20 +206,16 @@ func main() {
 	// Now data and all its contents are copied to /home/user/backup
 }
 ```
-It also accepts relative paths.
+
 
 ## HTTP Middlewares
 
-HTTP middlewares allow us to execute common logic before all our handlers,
-providing to all of them the same pre-processing/post-processing logic.
+HTTP middlewares allow us to execute common logic before/after the handlers one, normally providing all of them the same pre-processing/post-processing logic.
 
-All this middlewares respect the standard library interfaces, so it should 
-not be a problem to use them with your favorite's HTTP lib also.
+All this middlewares respect the standard library interfaces, so it should not be a problem to use them with your favorite's HTTP lib also. As an example, in the Gin library, theres a [gin.WrapH](https://pkg.go.dev/github.com/gin-gonic/gin#WrapH) utility that would help you to do the conversion from an `http.Handler` to an `gin.HandlerFunc`. Which can be used with the Gin interfaces later.
 ### Auth
 
-The [basic Auth](https://www.rfc-editor.org/rfc/rfc7617) middleware provides a way 
-to authenticate a specific set of `paths` and `methods` with a given `auth configuration`. 
-It also allows multiple sets of configurations. Lets do a walk-through with a full example.
+The [basic Auth](https://www.rfc-editor.org/rfc/rfc7617) middleware provides a way to authenticate a specific set of `paths` and `methods` with a given `auth configuration`. It also allows multiple sets of configurations. Lets do a walk-through with a full example.
 
 ```go
 package main
@@ -258,6 +251,7 @@ func main() {
 	// all routes globally.
 	mux := http.NewServeMux()
 	mux.Handle("/", handler())
+    // `middleware.For()` is a handler chaining method. It will chain the passed lis of middlewares to the provided handler. Many libraries already provide a similar interface.
 	mux.Handle("/protected", middleware.For(handler(), authMiddleware))
 
 	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != http.ErrServerClosed {
@@ -272,7 +266,6 @@ func main() {
 func handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello !"))
-
 	}
 }
 ```
@@ -280,9 +273,7 @@ Please visit code documentation for more clarification about each specific type/
 
 ### Default headers
 
-This middleware allows users to set a default set of headers that will be added on every response.
-
-The following handlers have always the last responsibility on wether to override the job done by this middleware.
+This middleware allows users to setup a default set of headers that will be added on every response. The following handlers in the chain have always the last responsibility on wether to override the job done by this middleware.
 
 ```go
 package main
@@ -324,8 +315,7 @@ func handler() http.HandlerFunc {
 
 ### Logger
 
-The logger middleware will print general request information in the standard output. It
-currently assumes the use of the `logrus` logger.
+The logger middleware will log general request information with the provided logger and level. It currently assumes the use of the `logrus` logger.
 
 ```go
 package main
@@ -367,10 +357,7 @@ INFO[0001] intercepted request                           duration="15.645µs" he
 
 ### Metrics
 
-The metrics middlewares allows instrumenting an application really fast 
-with [Prometheus](https://prometheus.io) metrics !
-
-Lets see a working example:
+The metrics middlewares allows instrumenting an application really fast with [Prometheus](https://prometheus.io) metrics ! Lets see a working example:
 
 ```go
 package main
@@ -384,27 +371,6 @@ import (
 
 	"go.eloylp.dev/kit/http/middleware"
 )
-
-// We need an endpoint mapper implementation to avoid cardinality problems in metrics.
-// This is just a naive implementation for the example.
-
-// This type should wrap an efficient implementation, like https://github.com/hashicorp/go-immutable-radix
-type EndpointMapper struct {
-	productIDPathReg *regexp.Regexp
-}
-
-func NewEndpointMapper() *EndpointMapper {
-	return &EndpointMapper{
-		productIDPathReg: regexp.MustCompile(`^/product/\d+$`),
-	}
-}
-
-func (m *EndpointMapper) Map(url string) string {
-	if m.productIDPathReg.MatchString(url) {
-		return "/product/{ID}"
-	}
-	return url
-}
 
 func main() {
 
@@ -431,6 +397,27 @@ func main() {
 	// Reach http://0.0.0.0:8080/product/1 , multiple times.
 	// Then Reach http://0.0.0.0:8080/metrics, we should see all metrics there.
 	// Note the placeholder {ID} instead of the real product id should be listed.
+}
+
+// We need an endpoint mapper implementation to avoid cardinality problems in metrics.
+// This is just a naive implementation for the example.
+
+// This type should wrap an efficient implementation, like https://github.com/hashicorp/go-immutable-radix
+type EndpointMapper struct {
+	productIDPathReg *regexp.Regexp
+}
+
+func NewEndpointMapper() *EndpointMapper {
+	return &EndpointMapper{
+		productIDPathReg: regexp.MustCompile(`^/product/\d+$`),
+	}
+}
+
+func (m *EndpointMapper) Map(url string) string {
+	if m.productIDPathReg.MatchString(url) {
+		return "/product/{ID}"
+	}
+	return url
 }
 
 func productHandler() http.HandlerFunc {
@@ -478,12 +465,7 @@ This 2 middlewares should be enough for a standard HTTP application, as [Prometh
 
 ### Panic handling
 
-Its almost mandatory to protect HTTP servers from panics. If not, one handler can cause
-an entire service outage.
-
-A common practice is to define a general panic handler, that will act as protection for
-the entire system. Later on, downstream code could define their own panic handlers if
-they wish to manage each situation differently.
+Its almost mandatory to protect HTTP servers from panics. If not, one handler that panics will cause an entire service outage. A common practice is to define a general panic handler, that will act as protection for the entire system. Later on, downstream code could define their own panic handlers if they wish to manage each situation differently.
 
 The following middleware should be defined at very first of the handler chain:
 
@@ -530,15 +512,13 @@ Visiting `/panic` should show us a similar terminal output like:
 $ 2023/01/09 18:10:04 panic detected: I was about to say hello, but i panicked !
 ```
 
-And allowing further operations to continue, without crashing the entire server.
+And allowing further requests to continue, without crashing the entire server.
 
-In a production scenario, we should instrument our handler function function with some kind of alerting.
+In a production scenario, it is recommended to instrument our handler function with some kind of metrics/alerting.
 
 ### Networking tools
 
-Very often its needed to wait for a service to be ready before connecting to it. This
-is especially the case in end to end testing or certain CLI tools. Here the `WaitTCPService()`
-and the `WaitTLSService()` can help on this task. Lets see an example:
+Very often its needed to wait for a service to be ready before connecting to it. This is especially the case in end to end testing or certain CLI tools. Here the `WaitTCPService()` and the `WaitTLSService()` can help on this task. Lets see an example:
 
 ```go
 package main
@@ -564,7 +544,7 @@ func main() {
 		}
 	})
 
-	// We wait for it to be ready ...
+	// Prepare the context ...
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -627,11 +607,7 @@ func doTCPRequest() {
 
 ### Public key infrastructure (PKI)
 
-Sometimes generating self signed certificates it something useful.
-Maybe you just want encryption and identity its not as such important. This
-could be the case of tests.
-
-This library provides a tool for that. Lets go through an example:
+Sometimes generating self signed certificates its something useful. Maybe you just want encryption and identity its not as such important. This could be the case of tests. This library provides a tool for that. Lets go through an example:
 
 ```go
 package main
@@ -646,6 +622,8 @@ import (
 )
 
 func main() {
+    
+    // Configure cert options ...
 	tlsCrt, err := pki.SelfSignedCert(
 		pki.WithCertSerialNumber(1),
 		pki.WithCertCommonName("example.com"),
@@ -659,7 +637,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	// Configure the server with the generated cert.
 	server := http.Server{
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{tlsCrt},
@@ -702,12 +680,7 @@ through functions which are at a different abstraction levels. Here we will see 
 Imagine we need to test an HTTP API. Such API is subject to a protocol (HTTP), in which we could
 base our testing infrastructure design.
 
-On this repo there is a `handler.Tester` which accepts an `http.Handler` (the SUT) and
-a list of `handler.Case`. Inside each `handler.Case` , we can define a list of `handler.CheckerFunc`. 
-At the same time, each `handler.CheckerFunc` will hold the necessary logic to test a different aspect 
-of the HTTP response.
-
-See the handler [code](./test/handler) for a list of all available checkers and low level details.
+On this repo there is a `handler.Tester(..)` which accepts an `http.Handler` (the SUT) and a list of `handler.Case`. Inside each `handler.Case` , we can define a list of `handler.CheckerFunc`. Each `handler.CheckerFunc` will hold the necessary logic to test a different aspect of the HTTP response. See the handler [code](./test/handler) for a list of all available checkers and low level details.
 
 Lets now see an example on how to test an HTTP API with the `handler.Tester` tool:
 ```go
@@ -783,9 +756,7 @@ func router() *http.ServeMux {
 
 ### Time helpers
 
-In heavily time centric applications, its encouraged to resist the temptation
-of using `time.Now()` directly for gathering the current time. Especially, 
-if there are plans to do heavy testing on them.
+In heavily time centric applications, its encouraged to resist the temptation of using `time.Now()` directly for gathering the current time. Especially, if there are plans to do heavy testing on them.
 
 The following time helpers should work as a replacement for the original `time.Now()`,
 which can be easily injected during tests later.
@@ -857,9 +828,7 @@ func (a *Shop) String() string {
 }
 ```
 
-As we can observe, this code would be difficult to test if we are not able
-to fake the current time. With such a change, now making tests is a breathe
-with the help of the `moment.NewFakedNow()` helper:
+As we can observe, this code would be difficult to test if we are not able to fake the current time. With such a change, now making tests is a breathe with the help of the `moment.NewFakedNow()` helper:
 
 ```go
 package main
